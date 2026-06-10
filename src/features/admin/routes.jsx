@@ -1,5 +1,5 @@
-import { Route, Routes } from "react-router-dom";
-import AdminLayout from "./components/AdminLayout";
+import { Routes, Route } from "react-router-dom";
+import AdminLayout from "./components/AdminLayout"; // Garanta que esse import existe
 import Dashboard from "./pages/Dashboard";
 import Relatorios from "./pages/Relatorios";
 
