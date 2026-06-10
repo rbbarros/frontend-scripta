@@ -1,16 +1,40 @@
-# React + Vite
+# 🎓 Scripta — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+O **Scripta** é uma plataforma acadêmica voltada para a gestão, publicação, avaliação e descoberta de projetos integradores inovadores no ambiente educacional. Este repositório contém todo o ecossistema Frontend e de Interface com o Usuário (UI).
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🏗️ Arquitetura do Projeto
 
-## React Compiler
+O projeto adota uma **Arquitetura Baseada em Features (Módulos Coesos)**, que isola as regras e domínios de negócio específicos de cada ator do sistema. Isso garante alta manutenibilidade, separação clara de responsabilidades e escalabilidade do código.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Abaixo está o mapeamento atual da estrutura de diretórios do projeto dentro do diretório `/src`:
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```text
+src/
+├── app/               # Configurações globais, ponto de entrada e roteamento principal
+│   ├── App.jsx        # Componente que envelopa o provedor de rotas
+│   ├── main.jsx       # Inicialização e renderização do React no DOM (Vite)
+│   └── routes.jsx     # Central de gerenciamento das rotas principais (/login, /aluno/*)
+│
+├── assets/            # Mídias estáticas globais (imagens, logotipos, ícones)
+│
+├── components/        # Componentes visuais globais reutilizáveis de baixo nível (ex: Button.jsx)
+│
+├── features/          # Módulos de regras de negócio isolados por contexto
+│   ├── auth/          # Fluxo de autenticação, validação e login
+│   │   ├── components/
+│   │   └── pages/     # Login.jsx
+│   │
+│   ├── student/       # Ecossistema e área logada do Aluno
+│   │   ├── components/# AlunoLayout.jsx (Navbar e Footer unificados)
+│   │   ├── pages/     # Dashboard.jsx (Início) e Portfolio.jsx
+│   │   └── routes.jsx # Sub-roteador interno exclusivo do perfil estudante
+│   │
+│   ├── professor/     # Funcionalidades e painel do avaliador/docente
+│   ├── admin/         # Painel administrativo e coordenação
+│   └── company/       # Portal corporativo de conexões com empresas
+│
+├── shared/            # Lógicas utilitárias e hooks genéricos compartilhados pelo app
+│
+└── styles/            # Estilizações globais do projeto (Tailwind CSS)
