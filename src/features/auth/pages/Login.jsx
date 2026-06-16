@@ -1,21 +1,58 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  loginAluno,
+  loginProfessor,
+  loginEmpresa,
+} from "../../../lib/authService";
+
+const loginRoutes = {
+  aluno: "/aluno",
+  professor: "/professor",
+  empresa: "/empresa",
+};
 
 export default function Login() {
   const navigate = useNavigate();
+  const [userType, setUserType] = useState("aluno");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setErro("");
-    if (email === "aluno@gmail.com" && senha === "1234") {
-      navigate("/aluno");
-    } else {
-      setErro("E-mail ou senha incorretos.");
+    setLoading(true);
+
+    try {
+      const payload =
+        userType === "empresa"
+          ? { email_contato: email, senha }
+          : { email, senha };
+
+      let response;
+      if (userType === "aluno") {
+        response = await loginAluno(payload);
+      } else if (userType === "professor") {
+        response = await loginProfessor(payload);
+      } else {
+        response = await loginEmpresa(payload);
+      }
+
+      localStorage.setItem("scripta_token", response.access_token);
+      localStorage.setItem("scripta_user_type", userType);
+      navigate(loginRoutes[userType]);
+    } catch (err) {
+      setErro(err.message || "Erro ao efetuar login. Verifique suas credenciais.");
+    } finally {
+      setLoading(false);
     }
   };
+
+  const emailLabel = userType === "empresa" ? "E-mail de contato" : "E-mail institucional";
+  const emailPlaceholder =
+    userType === "empresa" ? "contato@empresa.com.br" : "seu.email@senac.edu.br";
 
   return (
     <div className="min-h-screen bg-[#FAF8F5] flex font-sans antialiased">
@@ -40,9 +77,7 @@ export default function Login() {
             <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-2">
               Entrar na plataforma
             </h2>
-            <p className="text-sm text-gray-400">
-              Digite suas credenciais para acessar
-            </p>
+            <p className="text-sm text-gray-400">Selecione seu perfil e faça login.</p>
           </div>
 
           {erro && (
@@ -52,34 +87,55 @@ export default function Login() {
           )}
 
           <form onSubmit={handleLogin} className="space-y-6">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 border rounded-xl"
-              placeholder="seu.email@senac.edu.br"
-              required
-            />
-            <input
-              type="password"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              className="w-full p-3 border rounded-xl"
-              placeholder="Digite sua senha"
-              required
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Perfil</label>
+              <select
+                value={userType}
+                onChange={(e) => setUserType(e.target.value)}
+                className="w-full p-3 border rounded-xl"
+              >
+                <option value="aluno">Aluno</option>
+                <option value="professor">Professor</option>
+                <option value="empresa">Empresa</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{emailLabel}</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full p-3 border rounded-xl"
+                placeholder={emailPlaceholder}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+              <input
+                type="password"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                className="w-full p-3 border rounded-xl"
+                placeholder="Digite sua senha"
+                required
+              />
+            </div>
+
             <button
               type="submit"
-              className="w-full bg-[#f19f17] text-white py-3 rounded-xl font-semibold"
+              disabled={loading}
+              className="w-full bg-[#f19f17] text-white py-3 rounded-xl font-semibold disabled:opacity-50"
             >
-              Entrar
+              {loading ? "Entrando..." : "Entrar"}
             </button>
           </form>
 
-          {/* RODAPÉ CORRIGIDO */}
           <div className="mt-8 text-center">
             <p className="text-sm text-gray-500">
-              Não tem uma conta?{" "}
+              Não tem uma conta? {" "}
               <button
                 type="button"
                 onClick={() => navigate("/cadastro")}

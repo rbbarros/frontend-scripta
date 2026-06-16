@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getProfessorPerfil } from "../../../lib/authService";
+import { getEmpresaPerfil } from "../../../lib/authService";
 
-export default function Avaliacoes() {
+export default function Dashboard() {
   const navigate = useNavigate();
   const [perfil, setPerfil] = useState(null);
   const [erro, setErro] = useState("");
@@ -14,10 +14,10 @@ export default function Avaliacoes() {
       return;
     }
 
-    getProfessorPerfil()
+    getEmpresaPerfil()
       .then(setPerfil)
       .catch((e) => {
-        setErro(e.message || "Não foi possível carregar suas avaliações.");
+        setErro(e.message || "Não foi possível carregar seu perfil.");
         localStorage.removeItem("scripta_token");
         localStorage.removeItem("scripta_user_type");
         navigate("/");
@@ -27,9 +27,12 @@ export default function Avaliacoes() {
   return (
     <section className="mx-auto flex max-w-5xl flex-col gap-6">
       <div className="rounded-3xl border border-gray-100 bg-white p-8 shadow-sm">
-        <h2 className="text-xl font-semibold text-gray-800">Avaliações pendentes</h2>
+        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-blue-700">Empresa</p>
+        <h1 className="mt-2 text-3xl font-bold text-gray-900">
+          {perfil?.nome_empresa || "Painel da empresa"}
+        </h1>
         <p className="mt-2 text-sm text-gray-400">
-          {erro || (perfil ? `Professor ${perfil.nome}, aqui ficará a lista de projetos para avaliação.` : "Carregando dados...")}
+          {erro || `Setor: ${perfil?.setor || "Não informado"}`}
         </p>
       </div>
     </section>

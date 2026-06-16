@@ -1,6 +1,14 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
 export default function ProfessorLayout() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("scripta_token");
+    localStorage.removeItem("scripta_user_type");
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-gray-700">
       <header className="bg-white border-b border-gray-100 px-6 py-3 flex items-center justify-between">
@@ -18,7 +26,7 @@ export default function ProfessorLayout() {
           </NavLink>
         </nav>
 
-        <a href="/" className="rounded-xl border border-gray-200 px-3 py-2 text-xs hover:border-purple-500 hover:text-purple-600 transition-colors">Sair</a>
+        <button onClick={handleLogout} className="rounded-xl border border-gray-200 px-3 py-2 text-xs hover:border-purple-500 hover:text-purple-600 transition-colors">Sair</button>
       </header>
 
       <main className="px-6 py-8">

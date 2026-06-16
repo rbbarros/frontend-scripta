@@ -1,12 +1,12 @@
 import { Route, Routes } from "react-router-dom";
-import CompanyLayout from "./components/CompanyLayout";
+import EmpresaLayout from "./components/EmpresaLayout";
 import Dashboard from "./pages/Dashboard";
 import Oportunidades from "./pages/Oportunidades";
 
-export default function CompanyRoutes() {
+export default function EmpresaRoutes() {
   return (
     <Routes>
-      <Route element={<CompanyLayout />}>
+      <Route element={<EmpresaLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="oportunidades" element={<Oportunidades />} />
       </Route>

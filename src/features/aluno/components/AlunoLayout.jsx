@@ -5,6 +5,12 @@ export default function AlunoLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const handleLogout = () => {
+    localStorage.removeItem("scripta_token");
+    localStorage.removeItem("scripta_user_type");
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-sans text-gray-700 antialiased">
       {/* NAVBAR SUPERIOR (IDÊNTICA AO FIGMA) */}
@@ -28,17 +34,26 @@ export default function AlunoLayout() {
             🏠 Início
           </Link>
 
-          <button className="hover:bg-gray-50 hover:text-gray-800 px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all">
+          <Link
+            to="/aluno/buscar"
+            className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${location.pathname === "/aluno/buscar" ? "bg-amber-50 text-[#f19f17] font-semibold" : "hover:bg-gray-50 hover:text-gray-800"}`}
+          >
             🔍 Buscar
-          </button>
+          </Link>
 
-          <button className="hover:bg-gray-50 hover:text-gray-800 px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all">
+          <Link
+            to="/aluno/ranking"
+            className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${location.pathname === "/aluno/ranking" ? "bg-amber-50 text-[#f19f17] font-semibold" : "hover:bg-gray-50 hover:text-gray-800"}`}
+          >
             🥈 Ranking
-          </button>
+          </Link>
 
-          <button className="hover:bg-gray-50 hover:text-gray-800 px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all">
+          <Link
+            to="/aluno/certificados"
+            className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${location.pathname === "/aluno/certificados" ? "bg-amber-50 text-[#f19f17] font-semibold" : "hover:bg-gray-50 hover:text-gray-800"}`}
+          >
             📜 Certificados
-          </button>
+          </Link>
 
           <Link
             to="/aluno/portfolio"
@@ -47,13 +62,19 @@ export default function AlunoLayout() {
             💼 Portfólio
           </Link>
 
-          <button className="hover:bg-gray-50 hover:text-gray-800 px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all">
+          <Link
+            to="/aluno/projetos"
+            className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${location.pathname === "/aluno/projetos" ? "bg-amber-50 text-[#f19f17] font-semibold" : "hover:bg-gray-50 hover:text-gray-800"}`}
+          >
             📂 Meus Projetos
-          </button>
+          </Link>
 
-          <button className="hover:bg-gray-50 hover:text-gray-800 px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all">
+          <Link
+            to="/aluno/submeter"
+            className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${location.pathname === "/aluno/submeter" ? "bg-amber-50 text-[#f19f17] font-semibold" : "hover:bg-gray-50 hover:text-gray-800"}`}
+          >
             📤 Submeter
-          </button>
+          </Link>
         </nav>
 
         {/* ÍCONES DA DIREITA: NOTIFICAÇÃO + AVATAR DE USUÁRIO */}
@@ -65,7 +86,7 @@ export default function AlunoLayout() {
 
           {/* Avatar Laranja do Figma que desloga ao clicar */}
           <div
-            onClick={() => navigate("/login")}
+            onClick={handleLogout}
             title="Clique para deslogar"
             className="w-10 h-10 bg-[#f19f17] hover:bg-[#d68a12] text-white rounded-full flex items-center justify-center font-bold shadow-sm cursor-pointer transition-colors"
           >

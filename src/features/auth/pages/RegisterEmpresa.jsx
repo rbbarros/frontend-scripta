@@ -1,8 +1,46 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { registerEmpresa } from "../../../lib/authService";
 
 export default function RegisterEmpresa() {
   const navigate = useNavigate();
+  const [nomeEmpresa, setNomeEmpresa] = useState("");
+  const [nomeFantasia, setNomeFantasia] = useState("");
+  const [cnpj, setCnpj] = useState("");
+  const [email, setEmail] = useState("");
+  const [site, setSite] = useState("");
+  const [setor, setSetor] = useState("");
+  const [senha, setSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErro("");
+    setSucesso("");
+    setLoading(true);
+
+    try {
+      await registerEmpresa({
+        nome_empresa: nomeEmpresa,
+        nome_fantasia: nomeFantasia,
+        cnpj,
+        email_contato: email,
+        site,
+        setor,
+        senha,
+        confirmar_senha: confirmarSenha,
+      });
+      setSucesso("Conta de empresa criada com sucesso. Faça login para continuar.");
+      setTimeout(() => navigate("/"), 1200);
+    } catch (err) {
+      setErro(err.message || "Não foi possível cadastrar. Verifique os dados.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#FAF8F5] flex font-sans antialiased">
@@ -41,95 +79,111 @@ export default function RegisterEmpresa() {
             </p>
           </div>
 
-          <form className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {erro && (
+              <div className="mb-5 p-3.5 bg-red-50 border border-red-100 text-red-600 rounded-xl text-xs font-semibold text-center">
+                ⚠️ {erro}
+              </div>
+            )}
+            {sucesso && (
+              <div className="mb-5 p-3.5 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl text-xs font-semibold text-center">
+                ✅ {sucesso}
+              </div>
+            )}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Razão social
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Razão social</label>
               <input
                 type="text"
+                value={nomeEmpresa}
+                onChange={(e) => setNomeEmpresa(e.target.value)}
                 placeholder="Razão social da empresa"
                 className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#f19f17]"
+                required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nome fantasia
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nome fantasia</label>
               <input
                 type="text"
+                value={nomeFantasia}
+                onChange={(e) => setNomeFantasia(e.target.value)}
                 placeholder="Nome fantasia"
                 className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#f19f17]"
+                required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                CNPJ
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">CNPJ</label>
               <input
                 type="text"
+                value={cnpj}
+                onChange={(e) => setCnpj(e.target.value)}
                 placeholder="00.000.000/0001-00"
                 className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#f19f17]"
+                required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                E-mail corporativo
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">E-mail corporativo</label>
               <input
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="contato@empresa.com.br"
                 className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#f19f17]"
+                required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Site (opcional)
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Site (opcional)</label>
               <input
                 type="url"
+                value={site}
+                onChange={(e) => setSite(e.target.value)}
                 placeholder="https://www.empresa.com.br"
                 className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#f19f17]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Área de atuação
-              </label>
-              <select className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#f19f17] bg-white text-gray-500">
-                <option value="">Selecione uma área</option>
-                <option value="tecnologia">Tecnologia da Informação</option>
-                <option value="varejo">Varejo</option>
-                <option value="industria">Indústria</option>
-                <option value="servicos">Serviços</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Senha
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Área de atuação</label>
               <input
-                type="password"
-                placeholder="Crie uma senha segura"
+                type="text"
+                value={setor}
+                onChange={(e) => setSetor(e.target.value)}
+                placeholder="Ex: Tecnologia da Informação"
                 className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#f19f17]"
+                required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Confirmar senha
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
               <input
                 type="password"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                placeholder="Crie uma senha segura"
+                className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#f19f17]"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar senha</label>
+              <input
+                type="password"
+                value={confirmarSenha}
+                onChange={(e) => setConfirmarSenha(e.target.value)}
                 placeholder="Digite a senha novamente"
                 className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#f19f17]"
+                required
               />
             </div>
 
             <button
               type="submit"
-              className="w-full bg-[#f19f17] text-white py-3 rounded-xl font-semibold mt-4 hover:bg-[#d98b14] transition-colors"
+              disabled={loading}
+              className="w-full bg-[#f19f17] text-white py-3 rounded-xl font-semibold mt-4 hover:bg-[#d98b14] transition-colors disabled:opacity-50"
             >
-              Criar conta
+              {loading ? "Cadastrando..." : "Criar conta"}
             </button>
           </form>
 

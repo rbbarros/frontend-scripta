@@ -2,11 +2,13 @@ import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "../features/auth/pages/Login";
 import Register from "../features/auth/pages/Register";
-// Importando as novas telas (vamos criá-las no próximo passo)
 import RegisterAluno from "../features/auth/pages/RegisterAluno";
 import RegisterProfessor from "../features/auth/pages/RegisterProfessor";
 import RegisterEmpresa from "../features/auth/pages/RegisterEmpresa";
-import AdminRoutes from "../features/admin/routes";
+import CoordenacaoRoutes from "../features/coordenacao/routes";
+import AlunoRoutes from "../features/aluno/routes";
+import ProfessorRoutes from "../features/professor/routes";
+import EmpresaRoutes from "../features/empresa/routes";
 
 export default function App() {
   return (
@@ -15,12 +17,14 @@ export default function App() {
         <Route path="/" element={<Login />} />
         <Route path="/cadastro" element={<Register />} />
 
-        {/* Novas rotas dos formulários específicos */}
         <Route path="/cadastro/aluno" element={<RegisterAluno />} />
         <Route path="/cadastro/professor" element={<RegisterProfessor />} />
         <Route path="/cadastro/empresa" element={<RegisterEmpresa />} />
 
-        <Route path="/admin/*" element={<AdminRoutes />} />
+        <Route path="/aluno/*" element={<AlunoRoutes />} />
+        <Route path="/professor/*" element={<ProfessorRoutes />} />
+        <Route path="/empresa/*" element={<EmpresaRoutes />} />
+        <Route path="/coordenacao/*" element={<CoordenacaoRoutes />} />
       </Routes>
     </BrowserRouter>
   );
