@@ -1,14 +1,22 @@
 import { Route, Routes } from "react-router-dom";
 import ProfessorLayout from "./components/ProfessorLayout";
 import Dashboard from "./pages/Dashboard";
-import Avaliacoes from "./pages/Avaliacoes";
+import Projetos from "./pages/Projetos";
+import RealizarAvaliacao from "./pages/RealizarAvaliacao";
+import Historico from "./pages/Historico";
+import Ranking from "./pages/Ranking";
+import Perfil from "./pages/Perfil";
 
 export default function ProfessorRoutes() {
   return (
     <Routes>
       <Route element={<ProfessorLayout />}>
         <Route index element={<Dashboard />} />
-        <Route path="avaliacoes" element={<Avaliacoes />} />
+        <Route path="projetos" element={<Projetos />} />
+        <Route path="avaliacoes" element={<RealizarAvaliacao />} />
+        <Route path="historico" element={<Historico />} />
+        <Route path="ranking" element={<Ranking />} />
+        <Route path="perfil" element={<Perfil />} />
       </Route>
     </Routes>
   );
