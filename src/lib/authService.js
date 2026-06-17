@@ -96,3 +96,37 @@ export async function getEmpresaPerfil() {
 
   return apiRequest(`/empresas/${userId}`);
 }
+
+export async function getProjetos() {
+  return apiRequest("/projetos/");
+}
+
+export async function getProfessores() {
+  return apiRequest("/professores/");
+}
+
+export async function getEmpresas() {
+  return apiRequest("/empresas/");
+}
+
+export async function getCoordenadores() {
+  return apiRequest("/coordenadores/");
+}
+
+export async function getPortfolioList() {
+  return apiRequest("/portfolios/");
+}
+
+export async function createProjeto(data) {
+  return apiRequest("/projetos/", {
+    method: "POST",
+    body: data,
+  });
+}
+
+export async function createPortfolio(data) {
+  return apiRequest("/portfolios/", {
+    method: "POST",
+    body: data,
+  });
+}
