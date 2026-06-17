@@ -1,93 +1,98 @@
-import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { getAlunoPerfil } from "../../../lib/authService";
+import { getProjetosDestaque } from "../../../lib/projetosService";
+import { useAuthGuard } from "../../../shared/useAuthGuard";
+import { useApiData } from "../../../shared/useApiData";
+
+const atalhos = [
+  { to: "/aluno/submeter", icon: "📤", color: "bg-blue-600", title: "Submeter", desc: "Envie seu novo projeto integrador" },
+  { to: "/aluno/buscar", icon: "🔍", color: "bg-emerald-600", title: "Buscar Projetos", desc: "Explore projetos de outros alunos" },
+  { to: "/aluno/ranking", icon: "🏆", color: "bg-[#c67c00]", title: "Ranking", desc: "Confira os melhores projetos" },
+  { to: "/aluno/portfolio", icon: "💼", color: "bg-purple-600", title: "Portfólio", desc: "Gerencie seus projetos publicados" },
+];
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-  const [perfil, setPerfil] = useState(null);
-  const [erro, setErro] = useState("");
-  const [carregando, setCarregando] = useState(true);
+  useAuthGuard();
+  const { data: perfil } = useApiData(() => getAlunoPerfil(), []);
+  const { data: destaque } = useApiData(() => getProjetosDestaque(), []);
 
-  useEffect(() => {
-    const token = localStorage.getItem("scripta_token");
-    if (!token) {
-      navigate("/");
-      return;
-    }
-
-    getAlunoPerfil()
-      .then((data) => setPerfil(data))
-      .catch((e) => {
-        setErro(e.message || "Não foi possível carregar seu perfil.");
-        localStorage.removeItem("scripta_token");
-        localStorage.removeItem("scripta_user_type");
-        navigate("/");
-      })
-      .finally(() => setCarregando(false));
-  }, [navigate]);
+  const projetos = Array.isArray(destaque) ? destaque : destaque?.itens || [];
 
   return (
     <>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-          {carregando ? "Carregando..." : perfil?.nome ? `Olá, ${perfil.nome}` : "Bem-vindo ao Scripta"}
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+          {perfil?.nome ? `Olá, ${perfil.nome}` : "Bem-vindo ao Scripta"}
         </h1>
-        <p className="text-sm text-gray-400 mt-1">
-          {erro || (perfil ? `Curso: ${perfil.curso || "Não informado"}` : "Acesse rapidamente suas funcionalidades principais")}
+        <p className="mt-1 text-sm text-gray-400">
+          {perfil?.curso ? `Curso: ${perfil.curso}` : "Acesse rapidamente suas funcionalidades principais"}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <Link to="/aluno/submeter" className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow block text-left">
-          <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl mb-4 shadow-sm">
-            📤
-          </div>
-          <h3 className="font-bold text-gray-800 text-sm mb-1">Submeter</h3>
-          <p className="text-xs text-gray-400">Envie seu novo projeto integrador</p>
-        </Link>
-
-        <Link to="/aluno/buscar" className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow block text-left">
-          <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-white text-xl mb-4 shadow-sm">
-            🔍
-          </div>
-          <h3 className="font-bold text-gray-800 text-sm mb-1">Buscar Projetos</h3>
-          <p className="text-xs text-gray-400">Explore projetos de outros alunos</p>
-        </Link>
-
-        <Link to="/aluno/ranking" className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow block text-left">
-          <div className="w-12 h-12 bg-[#c67c00] rounded-xl flex items-center justify-center text-white text-xl mb-4 shadow-sm">
-            🏆
-          </div>
-          <h3 className="font-bold text-gray-800 text-sm mb-1">Ranking</h3>
-          <p className="text-xs text-gray-400">Confira os melhores projetos</p>
-        </Link>
-
-        <Link to="/aluno/portfolio" className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow block text-left">
-          <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center text-white text-xl mb-4 shadow-sm">
-            💼
-          </div>
-          <h3 className="font-bold text-gray-800 text-sm mb-1">Portfólio</h3>
-          <p className="text-xs text-gray-400">Gerencie seus projetos publicados</p>
-        </Link>
+      <div className="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {atalhos.map((a) => (
+          <Link
+            key={a.to}
+            to={a.to}
+            className="block rounded-2xl border border-gray-100 bg-white p-6 text-left shadow-sm transition-shadow hover:shadow-md"
+          >
+            <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl text-xl text-white shadow-sm ${a.color}`}>
+              {a.icon}
+            </div>
+            <h3 className="mb-1 text-sm font-bold text-gray-800">{a.title}</h3>
+            <p className="text-xs text-gray-400">{a.desc}</p>
+          </Link>
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Projetos em Destaque</h2>
-          <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm flex items-center justify-between">
-            <div>
-              <h4 className="font-bold text-gray-800 text-sm">Sistema de IA para Diagnóstico Médico</h4>
-              <span className="text-xs text-gray-400">Engenharia de Software • 📅 Há 2 dias</span>
-            </div>
-            <div className="bg-amber-50 text-[#c67c00] px-3 py-1.5 rounded-xl text-xs font-bold">🏆 9.8</div>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div className="space-y-4 lg:col-span-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-gray-800">Projetos em Destaque</h2>
+            <Link to="/aluno/buscar" className="text-xs font-semibold text-[#f19f17] hover:underline">
+              Ver todos →
+            </Link>
           </div>
+
+          {projetos.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-6 text-sm text-gray-400 shadow-sm">
+              Nenhum projeto em destaque disponível no momento.
+            </div>
+          ) : (
+            projetos.slice(0, 5).map((p) => (
+              <div
+                key={p.id}
+                className="flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-5 shadow-sm"
+              >
+                <div>
+                  <h4 className="text-sm font-bold text-gray-800">{p.titulo}</h4>
+                  <span className="text-xs text-gray-400">
+                    {p.area_conhecimento || p.curso}
+                  </span>
+                </div>
+                {p.media_geral != null && (
+                  <div className="rounded-xl bg-amber-50 px-3 py-1.5 text-xs font-bold text-[#c67c00]">
+                    🏆 {Number(p.media_geral).toFixed(1)}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
         </div>
 
         <div className="space-y-6">
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-            <h3 className="text-base font-bold text-gray-800 mb-4">Notificações</h3>
-            <div className="space-y-2 text-xs text-gray-500">
-              <div className="bg-amber-50 p-3 rounded-xl text-amber-900 font-medium">Novo projeto avaliado</div>
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+            <h3 className="mb-4 text-base font-bold text-gray-800">Ações Rápidas</h3>
+            <div className="space-y-2 text-xs">
+              <Link to="/aluno/projetos" className="block rounded-xl bg-gray-50 p-3 font-medium text-gray-600 hover:bg-gray-100">
+                📂 Acompanhar meus projetos
+              </Link>
+              <Link to="/aluno/certificados" className="block rounded-xl bg-gray-50 p-3 font-medium text-gray-600 hover:bg-gray-100">
+                📜 Ver meus certificados
+              </Link>
+              <Link to="/aluno/perfil" className="block rounded-xl bg-gray-50 p-3 font-medium text-gray-600 hover:bg-gray-100">
+                👤 Editar meu perfil
+              </Link>
             </div>
           </div>
         </div>

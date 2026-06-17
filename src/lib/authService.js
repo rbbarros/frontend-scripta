@@ -1,29 +1,5 @@
 import { apiRequest } from "./api";
-
-function decodeTokenPayload(token) {
-  if (!token) {
-    return null;
-  }
-
-  try {
-    const payloadPart = token.split(".")[1];
-    if (!payloadPart) {
-      return null;
-    }
-
-    const normalizedPayload = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = atob(normalizedPayload);
-    return JSON.parse(jsonPayload);
-  } catch {
-    return null;
-  }
-}
-
-function getCurrentUserId() {
-  const token = localStorage.getItem("scripta_token");
-  const payload = decodeTokenPayload(token);
-  return payload?.sub;
-}
+import { getCurrentUserId } from "./session";
 
 export async function loginAluno({ email, senha }) {
   return apiRequest("/alunos/login", {
@@ -67,32 +43,54 @@ export async function registerEmpresa(data) {
   });
 }
 
-export async function getAlunoPerfil() {
+function requireUserId() {
   const userId = getCurrentUserId();
-
   if (!userId) {
     throw new Error("Usuário não autenticado.");
   }
-
-  return apiRequest(`/alunos/${userId}`);
+  return userId;
 }
 
-export async function getProfessorPerfil() {
-  const userId = getCurrentUserId();
-
-  if (!userId) {
-    throw new Error("Usuário não autenticado.");
-  }
-
-  return apiRequest(`/professores/${userId}`);
+export async function getAlunoPerfil(id = requireUserId()) {
+  return apiRequest(`/alunos/${id}`);
 }
 
-export async function getEmpresaPerfil() {
-  const userId = getCurrentUserId();
+export async function updateAlunoPerfil(data, id = requireUserId()) {
+  return apiRequest(`/alunos/${id}`, { method: "PUT", body: data });
+}
 
-  if (!userId) {
-    throw new Error("Usuário não autenticado.");
-  }
+export async function deleteAluno(id) {
+  return apiRequest(`/alunos/${id}`, { method: "DELETE" });
+}
 
-  return apiRequest(`/empresas/${userId}`);
+export async function getProfessorPerfil(id = requireUserId()) {
+  return apiRequest(`/professores/${id}`);
+}
+
+export async function updateProfessorPerfil(data, id = requireUserId()) {
+  return apiRequest(`/professores/${id}`, { method: "PUT", body: data });
+}
+
+export async function deleteProfessor(id) {
+  return apiRequest(`/professores/${id}`, { method: "DELETE" });
+}
+
+export async function getEmpresaPerfil(id = requireUserId()) {
+  return apiRequest(`/empresas/${id}`);
+}
+
+export async function updateEmpresaPerfil(data, id = requireUserId()) {
+  return apiRequest(`/empresas/${id}`, { method: "PUT", body: data });
+}
+
+export async function deleteEmpresa(id) {
+  return apiRequest(`/empresas/${id}`, { method: "DELETE" });
+}
+
+export async function getCoordenadorPerfil(id = requireUserId()) {
+  return apiRequest(`/coordenadores/${id}`);
+}
+
+export async function updateCoordenadorPerfil(data, id = requireUserId()) {
+  return apiRequest(`/coordenadores/${id}`, { method: "PUT", body: data });
 }

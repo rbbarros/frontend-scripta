@@ -1,4 +1,3 @@
-import React from "react";
 import { useNavigate, Link, useLocation, Outlet } from "react-router-dom";
 
 export default function AlunoLayout() {
@@ -84,14 +83,21 @@ export default function AlunoLayout() {
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
           </button>
 
-          {/* Avatar Laranja do Figma que desloga ao clicar */}
-          <div
-            onClick={handleLogout}
-            title="Clique para deslogar"
+          {/* Avatar Laranja que leva ao perfil */}
+          <Link
+            to="/aluno/perfil"
+            title="Meu perfil"
             className="w-10 h-10 bg-[#f19f17] hover:bg-[#d68a12] text-white rounded-full flex items-center justify-center font-bold shadow-sm cursor-pointer transition-colors"
           >
             👤
-          </div>
+          </Link>
+
+          <button
+            onClick={handleLogout}
+            className="rounded-xl border border-gray-200 px-3 py-2 text-xs hover:border-[#f19f17] hover:text-[#f19f17] transition-colors"
+          >
+            Sair
+          </button>
         </div>
       </header>
 
