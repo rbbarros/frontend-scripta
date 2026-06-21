@@ -77,20 +77,20 @@ export default function AlunoLayout() {
           </Link>
         </nav>
 
-        {/* ÍCONES DA DIREITA: NOTIFICAÇÃO + AVATAR DE USUÁRIO */}
+          {/* ÍCONES DA DIREITA: NOTIFICAÇÃO + AVATAR DE USUÁRIO */}
         <div className="flex items-center gap-4">
           <button className="relative p-2 text-gray-400 hover:text-gray-600 rounded-full transition-colors">
             🔔{" "}
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
           </button>
 
-          {/* Avatar Laranja do Figma que desloga ao clicar */}
-          <div
-            onClick={handleLogout}
-            title="Clique para deslogar"
-            className="w-10 h-10 bg-[#f19f17] hover:bg-[#d68a12] text-white rounded-full flex items-center justify-center font-bold shadow-sm cursor-pointer transition-colors"
-          >
-            👤
+          <div className="flex items-center gap-3 border-l border-gray-100 pl-4">
+            <div className="w-8 h-8 bg-[#f19f17] text-white rounded-full flex items-center justify-center font-bold shadow-sm">
+              👤
+            </div>
+            <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 transition-colors" title="Sair">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </button>
           </div>
         </div>
       </header>

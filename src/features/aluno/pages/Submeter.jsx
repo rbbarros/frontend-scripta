@@ -1,254 +1,214 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { createProjeto, getAlunoPerfil, getProfessores } from "../../../lib/authService";
-
-const AREAS = [
-  "Tecnologia da Informação", "Engenharia de Software", "Ciência da Computação",
-  "Sistemas de Informação", "Design / UX", "Saúde e Biotecnologia",
-  "Gestão e Negócios", "Educação", "Outra",
-];
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { createProjeto } from "../../../lib/authService";
 
 export default function Submeter() {
   const navigate = useNavigate();
-  const [perfil, setPerfil] = useState(null);
-  const [professores, setProfessores] = useState([]);
-  const [form, setForm] = useState({
+  const [formData, setFormData] = useState({
     titulo: "",
     descricao: "",
-    curso: "",
-    turma: "",
-    semestre: "",
-    area_conhecimento: "",
-    professor_orientador_id: "",
+    area: "",
+    links: [{ rotulo: "", url: "" }],
+    integrantes: [""]
   });
-  const [links, setLinks] = useState([{ tipo: "GitHub", url: "" }]);
-  const [erro, setErro] = useState("");
-  const [sucesso, setSucesso] = useState("");
-  const [salvando, setSalvando] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!localStorage.getItem("scripta_token")) { navigate("/"); return; }
+  const handleAddLink = () => {
+    setFormData({ ...formData, links: [...formData.links, { rotulo: "", url: "" }] });
+  };
 
-    getAlunoPerfil().then((data) => {
-      setPerfil(data);
-      setForm((cur) => ({ ...cur, curso: data.curso || "", turma: data.turma || "", semestre: data.semestre_ingresso || "" }));
-    }).catch(() => navigate("/"));
+  const handleLinkChange = (index, field, value) => {
+    const newLinks = [...formData.links];
+    newLinks[index][field] = value;
+    setFormData({ ...formData, links: newLinks });
+  };
 
-    getProfessores().then(setProfessores).catch(() => setProfessores([]));
-  }, [navigate]);
+  const handleAddIntegrante = () => {
+    setFormData({ ...formData, integrantes: [...formData.integrantes, ""] });
+  };
 
-  const handleChange = (field) => (e) => setForm((cur) => ({ ...cur, [field]: e.target.value }));
+  const handleIntegranteChange = (index, value) => {
+    const newIntegrantes = [...formData.integrantes];
+    newIntegrantes[index] = value;
+    setFormData({ ...formData, integrantes: newIntegrantes });
+  };
 
-  const addLink = () => setLinks((cur) => [...cur, { tipo: "GitHub", url: "" }]);
-  const removeLink = (i) => setLinks((cur) => cur.filter((_, idx) => idx !== i));
-  const updateLink = (i, field, val) => setLinks((cur) => cur.map((l, idx) => idx === i ? { ...l, [field]: val } : l));
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e, isDraft = false) => {
     e.preventDefault();
-    setErro(""); setSucesso("");
-    if (!perfil?.id) { setErro("Seu perfil ainda não foi carregado."); return; }
-    setSalvando(true);
+    if (!formData.titulo) {
+      alert("O título do projeto é obrigatório.");
+      return;
+    }
+    
+    setLoading(true);
     try {
+      // Adapte os campos conforme o payload do backend
       await createProjeto({
-        titulo: form.titulo,
-        descricao: form.descricao,
-        curso: form.curso,
-        turma: form.turma,
-        semestre: form.semestre,
-        area_conhecimento: form.area_conhecimento,
-        aluno_responsavel_id: perfil.id,
-        professor_orientador_id: Number(form.professor_orientador_id),
+        titulo: formData.titulo,
+        descricao: formData.descricao,
+        area: formData.area,
+        status: isDraft ? "Rascunho" : "Aguardando avaliação",
+        arquivos: "[]", // placeholder
+        integrantes: JSON.stringify(formData.integrantes)
       });
-      setSucesso("Projeto submetido com sucesso! Ele está agora em análise.");
-      setForm((cur) => ({ ...cur, titulo: "", descricao: "", area_conhecimento: "", professor_orientador_id: "" }));
-      setLinks([{ tipo: "GitHub", url: "" }]);
-    } catch (e) {
-      setErro(e.message || "Não foi possível submeter o projeto.");
+      alert(isDraft ? "Rascunho salvo com sucesso!" : "Projeto submetido com sucesso!");
+      navigate("/aluno/projetos");
+    } catch (err) {
+      alert("Erro ao submeter o projeto. Tente novamente.");
     } finally {
-      setSalvando(false);
+      setLoading(false);
     }
   };
 
   return (
-    <section className="mx-auto flex max-w-5xl flex-col gap-6">
-      <div className="mb-2">
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Submeter Projeto</h1>
-        <p className="mt-2 text-sm text-gray-500">Preencha os dados abaixo para submeter seu projeto integrador</p>
+    <div className="animate-in fade-in zoom-in-95 duration-200 max-w-4xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Submeter Projeto</h1>
+        <p className="text-sm text-gray-500 mt-1">Preencha as informações do seu projeto integrador para submissão</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Formulário Principal */}
-        <form onSubmit={handleSubmit} className="lg:col-span-2 bg-white border border-gray-100 rounded-3xl p-8 shadow-sm space-y-6">
-          {erro && <div className="rounded-2xl bg-red-50 border border-red-100 p-4 text-sm text-red-700">{erro}</div>}
-          {sucesso && (
-            <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-4 text-sm text-emerald-700 flex items-start gap-3">
-              <span className="text-lg">✅</span>
-              <div><strong>Sucesso!</strong> {sucesso}</div>
+      <form className="space-y-8" onSubmit={(e) => handleSubmit(e, false)}>
+        {/* Informações do Projeto */}
+        <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+          <h2 className="text-lg font-bold text-gray-800 mb-6">Informações do Projeto</h2>
+          
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Título do Projeto</label>
+              <input
+                required
+                type="text"
+                placeholder="Digite o título do projeto"
+                className="w-full p-4 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#f19f17] focus:ring-2 focus:ring-amber-50 transition-all"
+                value={formData.titulo}
+                onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+              />
             </div>
-          )}
 
-          {/* Informações do Projeto */}
-          <div>
-            <h2 className="text-sm font-bold text-gray-800 uppercase tracking-widest mb-4 pb-2 border-b border-gray-100">
-              Informações do Projeto
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Título do Projeto *</label>
-                <input
-                  value={form.titulo}
-                  onChange={handleChange("titulo")}
-                  placeholder="Ex: Sistema de IA para diagnóstico médico"
-                  className="w-full rounded-xl border border-gray-200 p-3 text-sm outline-none focus:border-[#f19f17] transition-colors"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Descrição *</label>
-                <textarea
-                  value={form.descricao}
-                  onChange={handleChange("descricao")}
-                  placeholder="Descreva o objetivo, metodologia e resultados esperados do projeto..."
-                  className="w-full rounded-xl border border-gray-200 p-3 text-sm outline-none focus:border-[#f19f17] transition-colors min-h-[120px] resize-none"
-                  required
-                />
-                <p className="text-xs text-gray-400 mt-1">{form.descricao.length} / 1000 caracteres</p>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Área de Conhecimento *</label>
-                <select
-                  value={form.area_conhecimento}
-                  onChange={handleChange("area_conhecimento")}
-                  className="w-full rounded-xl border border-gray-200 p-3 text-sm outline-none focus:border-[#f19f17] transition-colors bg-white"
-                  required
-                >
-                  <option value="">Selecione a área...</option>
-                  {AREAS.map((a) => <option key={a} value={a}>{a}</option>)}
-                </select>
-              </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Descrição</label>
+              <textarea
+                rows="4"
+                placeholder="Descreva o objetivo, metodologia e principais resultados do projeto..."
+                className="w-full p-4 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#f19f17] focus:ring-2 focus:ring-amber-50 transition-all resize-none"
+                value={formData.descricao}
+                onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+              ></textarea>
             </div>
-          </div>
 
-          {/* Dados Acadêmicos */}
-          <div>
-            <h2 className="text-sm font-bold text-gray-800 uppercase tracking-widest mb-4 pb-2 border-b border-gray-100">
-              Dados Acadêmicos
-            </h2>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Curso *</label>
-                <input value={form.curso} onChange={handleChange("curso")} placeholder="Ex: Engenharia de Software" className="w-full rounded-xl border border-gray-200 p-3 text-sm outline-none focus:border-[#f19f17]" required />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Turma *</label>
-                <input value={form.turma} onChange={handleChange("turma")} placeholder="Ex: SI3A" className="w-full rounded-xl border border-gray-200 p-3 text-sm outline-none focus:border-[#f19f17]" required />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Semestre *</label>
-                <input value={form.semestre} onChange={handleChange("semestre")} placeholder="Ex: 2026.1" className="w-full rounded-xl border border-gray-200 p-3 text-sm outline-none focus:border-[#f19f17]" required />
-              </div>
-            </div>
-            <div className="mt-4">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Professor Orientador *</label>
-              <select value={form.professor_orientador_id} onChange={handleChange("professor_orientador_id")} className="w-full rounded-xl border border-gray-200 p-3 text-sm outline-none focus:border-[#f19f17] bg-white" required>
-                <option value="">Selecione o professor orientador...</option>
-                {professores.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Área de conhecimento</label>
+              <select
+                className="w-full p-4 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#f19f17] focus:ring-2 focus:ring-amber-50 transition-all text-gray-600 bg-white"
+                value={formData.area}
+                onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+              >
+                <option value="">Selecione uma área</option>
+                <option value="Tecnologia da Informação">Tecnologia da Informação</option>
+                <option value="Engenharia de Software">Engenharia de Software</option>
+                <option value="Sistemas de Informação">Sistemas de Informação</option>
+                <option value="Design Digital">Design Digital</option>
               </select>
             </div>
-          </div>
 
-          {/* Links do Projeto */}
-          <div>
-            <h2 className="text-sm font-bold text-gray-800 uppercase tracking-widest mb-4 pb-2 border-b border-gray-100">
-              Links do Projeto
-            </h2>
-            <div className="space-y-3">
-              {links.map((link, i) => (
-                <div key={i} className="flex gap-2 items-center">
-                  <select
-                    value={link.tipo}
-                    onChange={(e) => updateLink(i, "tipo", e.target.value)}
-                    className="rounded-xl border border-gray-200 p-3 text-sm outline-none focus:border-[#f19f17] bg-white w-36 shrink-0"
-                  >
-                    <option>GitHub</option>
-                    <option>LinkedIn</option>
-                    <option>Figma</option>
-                    <option>Deploy</option>
-                    <option>Documento</option>
-                    <option>Outro</option>
-                  </select>
-                  <input
-                    value={link.url}
-                    onChange={(e) => updateLink(i, "url", e.target.value)}
-                    placeholder="https://..."
-                    className="flex-1 rounded-xl border border-gray-200 p-3 text-sm outline-none focus:border-[#f19f17]"
-                  />
-                  {links.length > 1 && (
-                    <button type="button" onClick={() => removeLink(i)} className="text-red-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 shrink-0">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button type="button" onClick={addLink} className="flex items-center gap-2 text-sm font-semibold text-[#f19f17] hover:text-amber-600 mt-2">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-                Adicionar outro link
-              </button>
-            </div>
-          </div>
-
-          <button
-            disabled={salvando}
-            className="w-full rounded-xl bg-[#f19f17] py-4 font-bold text-white text-sm disabled:opacity-50 hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
-          >
-            {salvando ? (
-              <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> Enviando...</>
-            ) : (
-              <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> Submeter Projeto</>
-            )}
-          </button>
-        </form>
-
-        {/* Sidebar Dicas */}
-        <div className="space-y-5">
-          {perfil && (
-            <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm">
-              <h3 className="text-sm font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">Submetendo como</h3>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                  {perfil.nome?.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-gray-800">{perfil.nome}</p>
-                  <p className="text-xs text-gray-500">{perfil.email}</p>
-                </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-bold text-gray-700 flex items-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#f19f17]"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                  Links do Projeto
+                </label>
+                <button type="button" onClick={handleAddLink} className="text-sm font-semibold text-[#f19f17] hover:text-[#d68a12] transition-colors">
+                  + Adicionar link
+                </button>
               </div>
-            </div>
-          )}
-
-          <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">💡 Dicas para uma boa submissão</h3>
-            <ul className="space-y-3 text-xs text-gray-600">
-              <li className="flex items-start gap-2"><span className="text-[#f19f17] mt-0.5">●</span><span>Use um <strong>título claro e descritivo</strong> que identifique bem o projeto.</span></li>
-              <li className="flex items-start gap-2"><span className="text-[#f19f17] mt-0.5">●</span><span>A <strong>descrição deve incluir</strong> objetivo, metodologia e resultado esperado.</span></li>
-              <li className="flex items-start gap-2"><span className="text-[#f19f17] mt-0.5">●</span><span>Adicione o <strong>link do GitHub</strong> para que os professores possam revisar o código.</span></li>
-              <li className="flex items-start gap-2"><span className="text-[#f19f17] mt-0.5">●</span><span>Escolha o professor orientador correto para agilizar a avaliação.</span></li>
-            </ul>
-          </div>
-
-          <div className="bg-amber-50 border border-amber-100 rounded-3xl p-5">
-            <h3 className="text-sm font-bold text-amber-800 mb-3">Ciclo do projeto</h3>
-            <div className="space-y-2">
-              {["Rascunho", "Submetido", "Em Revisão", "Aprovado / Reprovado"].map((s, i) => (
-                <div key={s} className="flex items-center gap-2 text-xs text-amber-700">
-                  <span className="w-5 h-5 rounded-full bg-amber-200 flex items-center justify-center font-bold shrink-0">{i + 1}</span>
-                  {s}
-                </div>
-              ))}
+              <div className="space-y-3">
+                {formData.links.map((link, idx) => (
+                  <div key={idx} className="flex gap-3">
+                    <input
+                      type="text"
+                      placeholder="Rótulo (ex: GitHub, Figma)"
+                      className="w-1/3 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#f19f17] transition-all"
+                      value={link.rotulo}
+                      onChange={(e) => handleLinkChange(idx, "rotulo", e.target.value)}
+                    />
+                    <input
+                      type="url"
+                      placeholder="https://..."
+                      className="flex-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#f19f17] transition-all"
+                      value={link.url}
+                      onChange={(e) => handleLinkChange(idx, "url", e.target.value)}
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-400 mt-2">Adicione links relevantes como repositório, protótipo, vídeo de demonstração, etc.</p>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+
+        {/* Integrantes */}
+        <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#f19f17]"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              Integrantes
+            </h2>
+            <button type="button" onClick={handleAddIntegrante} className="px-4 py-1.5 text-xs font-semibold text-[#f19f17] border border-[#f19f17] rounded-lg hover:bg-amber-50 transition-colors">
+              + Adicionar
+            </button>
+          </div>
+          
+          <div className="space-y-3">
+            {formData.integrantes.map((nome, idx) => (
+              <input
+                key={idx}
+                type="text"
+                placeholder="Nome do integrante"
+                className="w-full p-4 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#f19f17] transition-all"
+                value={nome}
+                onChange={(e) => handleIntegranteChange(idx, e.target.value)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Arquivos do Projeto */}
+        <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+          <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2 mb-6">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#f19f17]"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            Arquivos do Projeto
+          </h2>
+          
+          <div className="border-2 border-dashed border-gray-200 rounded-2xl p-12 text-center hover:bg-gray-50 transition-colors cursor-pointer group">
+            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 mx-auto mb-4 group-hover:bg-amber-100 group-hover:text-[#f19f17] transition-colors">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            </div>
+            <p className="text-sm text-gray-600 mb-1">
+              Arraste e solte seus arquivos aqui ou <span className="text-[#f19f17] font-semibold">clique para selecionar</span>
+            </p>
+            <p className="text-xs text-gray-400">PDF, DOCX, PPTX - Máximo 50MB por arquivo</p>
+          </div>
+        </div>
+
+        {/* Botões */}
+        <div className="flex items-center justify-end gap-4 pt-4">
+          <button
+            type="button"
+            onClick={(e) => handleSubmit(e, true)}
+            disabled={loading}
+            className="px-6 py-3 rounded-xl font-bold text-[#f19f17] border border-[#f19f17] hover:bg-amber-50 transition-colors disabled:opacity-50"
+          >
+            Salvar Rascunho
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-8 py-3 rounded-xl font-bold text-white bg-[#f19f17] hover:bg-[#d68a12] transition-colors disabled:opacity-50 shadow-md shadow-amber-500/20"
+          >
+            {loading ? "Enviando..." : "Submeter Projeto"}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
