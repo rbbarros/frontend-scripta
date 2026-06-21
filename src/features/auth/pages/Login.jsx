@@ -4,12 +4,14 @@ import {
   loginAluno,
   loginProfessor,
   loginEmpresa,
+  loginCoordenador,
 } from "../../../lib/authService";
 
 const loginRoutes = {
   aluno: "/aluno",
   professor: "/professor",
   empresa: "/empresa",
+  coordenacao: "/coordenacao",
 };
 
 export default function Login() {
@@ -36,6 +38,8 @@ export default function Login() {
         response = await loginAluno(payload);
       } else if (userType === "professor") {
         response = await loginProfessor(payload);
+      } else if (userType === "coordenacao") {
+        response = await loginCoordenador(payload);
       } else {
         response = await loginEmpresa(payload);
       }
@@ -97,6 +101,7 @@ export default function Login() {
                 <option value="aluno">Aluno</option>
                 <option value="professor">Professor</option>
                 <option value="empresa">Empresa</option>
+                <option value="coordenacao">Coordenação</option>
               </select>
             </div>
 

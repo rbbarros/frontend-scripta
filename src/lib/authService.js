@@ -46,6 +46,13 @@ export async function loginEmpresa({ email_contato, senha }) {
   });
 }
 
+export async function loginCoordenador({ email, senha }) {
+  return apiRequest("/coordenadores/login", {
+    method: "POST",
+    body: { email, senha },
+  });
+}
+
 export async function registerAluno(data) {
   return apiRequest("/alunos/", {
     method: "POST",
@@ -95,6 +102,33 @@ export async function getEmpresaPerfil() {
   }
 
   return apiRequest(`/empresas/${userId}`);
+}
+
+export async function updateEmpresaPerfil(data) {
+  const userId = getCurrentUserId();
+
+  if (!userId) {
+    throw new Error("Usuário não autenticado.");
+  }
+
+  return apiRequest(`/empresas/${userId}`, {
+    method: "PUT",
+    body: data,
+  });
+}
+
+
+export async function updateProfessorPerfil(data) {
+  const userId = getCurrentUserId();
+
+  if (!userId) {
+    throw new Error("Usuário não autenticado.");
+  }
+
+  return apiRequest(`/professores/${userId}`, {
+    method: "PUT",
+    body: data,
+  });
 }
 
 export async function getProjetos() {

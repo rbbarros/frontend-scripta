@@ -1,97 +1,111 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { getProfessorPerfil, getProjetos } from "../../../lib/authService";
-import { atualizarStatusProjeto } from "../../../lib/projetoService";
+import { getProjetos, getProfessorPerfil } from "../../../lib/authService";
 
 export default function Avaliacoes() {
-  const navigate = useNavigate();
-  const [perfil, setPerfil] = useState(null);
   const [projetos, setProjetos] = useState([]);
-  const [erro, setErro] = useState("");
-  const [avaliandoId, setAvaliandoId] = useState(null);
-  const [parecer, setParecer] = useState("suficiente");
+  const [perfil, setPerfil] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("scripta_token");
-    if (!token) {
-      navigate("/");
-      return;
-    }
-
+    getProjetos()
+      .then((data) => setProjetos(Array.isArray(data) ? data : []))
+      .catch(() => setProjetos([]));
+      
     getProfessorPerfil()
       .then(setPerfil)
-      .catch((e) => {
-        setErro(e.message || "Não foi possível carregar suas avaliações.");
-        localStorage.removeItem("scripta_token");
-        localStorage.removeItem("scripta_user_type");
-        navigate("/");
-      });
+      .catch(() => {});
+  }, []);
 
-    carregarProjetos();
-  }, [navigate]);
+  const profName = perfil?.nome || "Ana Silva";
 
-  const carregarProjetos = () => {
-    getProjetos().then(setProjetos).catch(() => setProjetos([]));
-  };
-
-  const pendentes = projetos.filter((projeto) => ["submetido", "em_revisao", "em_avaliacao"].includes((projeto.status || "").toLowerCase()));
-
-  const handleAvaliar = async (idProjeto) => {
-    try {
-      const novoStatus = parecer === "suficiente" ? "aprovado" : "reprovado";
-      await atualizarStatusProjeto(idProjeto, novoStatus);
-      setAvaliandoId(null);
-      carregarProjetos();
-    } catch (e) {
-      alert("Erro ao enviar avaliação: " + e.message);
+  const mockAvaliacoes = [
+    {
+      titulo: "Plataforma de Blockchain para Certificados",
+      curso: "Ciência da Computação - CC-4A",
+      data: "28/05/2025",
+      badge: "Excelente",
+      badgeColor: "bg-emerald-50 text-emerald-600",
+      inovacao: 97,
+      qualidade: 95,
+      aplicabilidade: 96,
+      clareza: 95,
+      media: 96,
+      parecer: "Projeto de alta qualidade técnica, com inovação real e aplicabilidade comprovada. A documentação é clara e completa."
+    },
+    {
+      titulo: "App de Realidade Aumentada Educacional",
+      curso: "Design Digital - DD-1A",
+      data: "20/05/2025",
+      badge: "Ótimo",
+      badgeColor: "bg-blue-50 text-blue-600",
+      inovacao: 92,
+      qualidade: 85,
+      aplicabilidade: 88,
+      clareza: 87,
+      media: 88,
+      parecer: "Ótima aplicação das tecnologias emergentes no contexto educacional. Recomendo aprimorar a usabilidade."
     }
-  };
+  ];
 
   return (
-    <section className="mx-auto flex max-w-5xl flex-col gap-6">
-      <div className="rounded-3xl border border-gray-100 bg-white p-8 shadow-sm">
-        <h2 className="text-xl font-semibold text-gray-800">Avaliações pendentes</h2>
-        <p className="mt-2 text-sm text-gray-400">
-          {erro || (perfil ? `Professor ${perfil.nome}, estes são os projetos que ainda precisam de avaliação.` : "Carregando dados...")}
-        </p>
+    <div className="animate-in fade-in zoom-in-95 duration-200">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Histórico de Avaliações</h1>
+        <p className="text-sm text-gray-500 mt-1">Todas as avaliações realizadas por você na plataforma</p>
       </div>
 
-      <div className="grid gap-4">
-        {pendentes.map((projeto) => (
-          <article key={projeto.id} className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm flex flex-col md:flex-row justify-between items-start gap-4">
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-800">{projeto.titulo}</h3>
-              <p className="mt-1 text-sm text-gray-500">Responsável: {projeto.aluno_responsavel} • Status atual: {projeto.status}</p>
-            </div>
-            
-            {avaliandoId === projeto.id ? (
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 w-full md:w-auto mt-4 md:mt-0">
-                <p className="text-sm font-semibold mb-2 text-gray-700">Dar parecer:</p>
-                <select 
-                  value={parecer} 
-                  onChange={(e) => setParecer(e.target.value)}
-                  className="w-full mb-3 rounded-lg border border-gray-300 p-2 text-sm"
-                >
-                  <option value="suficiente">Suficiente (Aprovar)</option>
-                  <option value="insuficiente">Insuficiente (Reprovar)</option>
-                </select>
-                <div className="flex gap-2">
-                  <button onClick={() => handleAvaliar(projeto.id)} className="flex-1 rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700">Confirmar</button>
-                  <button onClick={() => setAvaliandoId(null)} className="flex-1 rounded-lg bg-gray-200 px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-300">Cancelar</button>
+      <div className="space-y-6">
+        {mockAvaliacoes.map((a, i) => (
+          <article key={i} className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-8">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-orange-400 shrink-0">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-lg leading-snug mb-1">{a.titulo}</h3>
+                  <p className="text-xs text-gray-500">{a.curso}</p>
                 </div>
               </div>
-            ) : (
-              <button 
-                onClick={() => { setAvaliandoId(projeto.id); setParecer("suficiente"); }}
-                className="rounded-xl bg-[#f19f17] px-4 py-2 text-sm font-bold text-white hover:bg-amber-600"
-              >
-                Avaliar
-              </button>
-            )}
+              <div className="flex items-center gap-3 md:ml-auto">
+                <span className="text-xs text-gray-400 font-medium">{a.data}</span>
+                <span className={`px-3 py-1.5 rounded-lg text-xs font-bold ${a.badgeColor}`}>{a.badge}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+              <div>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Inovação</p>
+                <p className="text-lg font-bold text-gray-900">{a.inovacao}%</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Qualidade técnica</p>
+                <p className="text-lg font-bold text-gray-900">{a.qualidade}%</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Aplicabilidade</p>
+                <p className="text-lg font-bold text-gray-900">{a.aplicabilidade}%</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Clareza da solução</p>
+                <p className="text-lg font-bold text-gray-900">{a.clareza}%</p>
+              </div>
+            </div>
+
+            <div className="w-full bg-gray-100 rounded-full h-2.5 mb-2 flex overflow-hidden">
+               <div className="bg-[#f19f17] h-2.5 rounded-full" style={{ width: `${a.media}%` }}></div>
+            </div>
+            <div className="text-right mb-8">
+              <span className="text-sm font-bold text-gray-900">{a.media}% média</span>
+            </div>
+
+            <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Parecer</p>
+              <p className="text-sm text-gray-700 leading-relaxed mb-4">{a.parecer}</p>
+              <p className="text-xs text-gray-400 italic">Avaliado por Prof. {profName} - {a.data}</p>
+            </div>
           </article>
         ))}
-        {!pendentes.length && <div className="rounded-3xl border border-dashed border-gray-200 bg-white p-8 text-sm text-gray-500 shadow-sm text-center">Nenhuma avaliação pendente no momento.</div>}
       </div>
-    </section>
+    </div>
   );
 }
