@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createPortfolio, getAlunoPerfil, getProjetos, getPortfolioList } from "../../../lib/authService";
-import { deletarPortfolio, atualizarPortfolio } from "../../../lib/portfolioService";
+import { createPortfolio, getAlunoPerfil, getProjetos, getPortfolioList, deletarPortfolio, updatePortfolio } from "../../../lib/authService";
 
 const GRADIENTS = [
   "from-blue-500 to-indigo-600",
@@ -73,7 +72,7 @@ export default function Portfolio() {
   const handleToggleVisibilidade = async (item) => {
     const nova = item.visibilidade === "publico" ? "privado" : "publico";
     try {
-      await atualizarPortfolio(item.id, { aluno_id: item.aluno_id, projeto_id: item.projeto_id, visibilidade: nova });
+      await updatePortfolio(item.id, { visibilidade: nova });
       carregarDados();
     } catch (e) { alert("Erro ao atualizar: " + e.message); }
   };
