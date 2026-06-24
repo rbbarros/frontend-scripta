@@ -1,90 +1,160 @@
-import React from "react";
+import React, { useState, useEffect } from 'react';
+import { Search, Plus, Eye, Download } from 'lucide-react';
+import { apiRequest } from '../../../lib/api';
 
 export default function Certificados() {
-  const certificados = [
-    { projeto: "Sistema de IA para Diagnóstico Médico", alunos: "João Silva, Maria Santos +2", status: "Emitido", data: "28/05/2025" },
-    { projeto: "Plataforma de Blockchain", alunos: "Pedro Costa, Ana Lima +1", status: "Pendente", data: "25/05/2025" },
-    { projeto: "App de Mobilidade Urbana", alunos: "Lucas Pereira, Júlia Mendes", status: "Pendente", data: "22/05/2025" },
-    { projeto: "Dashboard de Dados Educacionais", alunos: "Roberto Alves, Carla Dias", status: "Emitido", data: "15/05/2025" },
-  ];
+  const [certificados, setCertificados] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchCertificados();
+  }, []);
+
+  const fetchCertificados = async () => {
+    try {
+      setLoading(true);
+      const data = await apiRequest('/certificados/emitidos');
+      // Handle either array response or { data: [...] } structure
+      setCertificados(Array.isArray(data) ? data : (data?.data || []));
+      setError(null);
+    } catch (err) {
+      console.error(err);
+      setError('Erro ao carregar certificados.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredCertificados = certificados.filter(cert => {
+    const term = searchTerm.toLowerCase();
+    const alunoMatch = cert.aluno?.toLowerCase().includes(term);
+    const projetoMatch = cert.projeto?.toLowerCase().includes(term);
+    return alunoMatch || projetoMatch;
+  });
+
+  const getConceitoBadge = (conceito) => {
+    const label = conceito || 'N/A';
+    const normalized = label.toLowerCase();
+    
+    if (normalized === 'excelente') {
+      return <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 border border-green-200 backdrop-blur-sm">Excelente</span>;
+    }
+    if (normalized === 'ótimo' || normalized === 'otimo') {
+      return <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800 border border-amber-200 backdrop-blur-sm">Ótimo</span>;
+    }
+    if (normalized === 'bom') {
+      return <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 border border-blue-200 backdrop-blur-sm">Bom</span>;
+    }
+    if (normalized === 'regular') {
+      return <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 border border-gray-200 backdrop-blur-sm">Regular</span>;
+    }
+    
+    return <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 border border-gray-200 backdrop-blur-sm">{label}</span>;
+  };
 
   return (
-    <div className="animate-in fade-in zoom-in-95 duration-200">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Emissão de Certificados</h1>
-        <p className="text-sm text-gray-500 mt-1">Gerencie e emita certificados para projetos aprovados</p>
-      </div>
+    <div className="p-8 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-gray-800 font-sans">
+      {/* Top Bar / Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Certificados</h1>
+        
+        <div className="flex flex-col sm:flex-row gap-4 items-center w-full md:w-auto">
+          {/* Search Input Container */}
+          <div className="relative w-full sm:w-80 group">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400 group-focus-within:text-[#f19f17] transition-colors" />
+            </div>
+            <input
+              type="text"
+              placeholder="Buscar por aluno ou projeto..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="block w-full pl-10 pr-4 py-2.5 border border-white/40 rounded-xl bg-white/60 backdrop-blur-md shadow-sm focus:ring-2 focus:ring-[#f19f17]/50 focus:border-[#f19f17] sm:text-sm transition-all text-gray-700 outline-none placeholder:text-gray-400 hover:bg-white/80"
+            />
+          </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-          </div>
-          <div>
-            <p className="text-sm font-bold text-gray-500">Certificados Emitidos</p>
-            <p className="text-3xl font-bold text-gray-900">342</p>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shrink-0">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-          </div>
-          <div>
-            <p className="text-sm font-bold text-gray-500">Aguardando Emissão</p>
-            <p className="text-3xl font-bold text-gray-900">12</p>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl shrink-0">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-          </div>
-          <div>
-            <p className="text-sm font-bold text-gray-500">Tempo Médio</p>
-            <p className="text-3xl font-bold text-gray-900">2 <span className="text-lg text-gray-500 font-medium">dias</span></p>
-          </div>
+          {/* Emit Certificate Button */}
+          <button className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 bg-[#f19f17] hover:bg-[#d98b14] text-white font-semibold rounded-xl shadow-lg shadow-[#f19f17]/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0">
+            <Plus className="h-5 w-5" />
+            <span>Emitir Certificado</span>
+          </button>
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-          <h3 className="font-bold text-gray-800 text-sm px-2">Lista de Certificados</h3>
-          <div className="flex gap-2">
-            <button className="text-sm font-bold text-[#f19f17] border border-[#f19f17] rounded-xl px-4 py-2 hover:bg-amber-50 transition-colors">
-              Emitir em lote (2)
-            </button>
-          </div>
+      {/* Main Content Area - Glassmorphism Table */}
+      <div className="bg-white/70 backdrop-blur-xl border border-white shadow-2xl rounded-2xl overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-white/40 to-transparent pointer-events-none"></div>
+        
+        <div className="px-6 py-5 border-b border-gray-100/80 bg-white/40 relative z-10">
+          <h2 className="text-xl font-semibold text-gray-800">Certificados Emitidos</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-white border-b border-gray-100 text-[10px] uppercase tracking-widest text-gray-400 font-bold">
-                <th className="py-4 px-6">Projeto</th>
-                <th className="py-4 px-6">Alunos</th>
-                <th className="py-4 px-6">Data Aprovação</th>
-                <th className="py-4 px-6">Status</th>
-                <th className="py-4 px-6 text-right">Ação</th>
+        
+        <div className="overflow-x-auto relative z-10">
+          <table className="min-w-full divide-y divide-gray-200/60">
+            <thead className="bg-gray-50/50 backdrop-blur-md">
+              <tr>
+                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Aluno</th>
+                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Projeto</th>
+                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Curso</th>
+                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Emissão</th>
+                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Conceito</th>
+                <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Ações</th>
               </tr>
             </thead>
-            <tbody>
-              {certificados.map((c, i) => (
-                <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                  <td className="py-4 px-6 font-bold text-sm text-gray-900">{c.projeto}</td>
-                  <td className="py-4 px-6 text-sm text-gray-600">{c.alunos}</td>
-                  <td className="py-4 px-6 text-sm text-gray-500">{c.data}</td>
-                  <td className="py-4 px-6">
-                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md border ${c.status === 'Emitido' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
-                      {c.status}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 text-right">
-                    {c.status === "Emitido" ? (
-                      <button className="text-sm font-bold text-gray-500 hover:text-gray-900">Ver</button>
-                    ) : (
-                      <button className="text-sm font-bold text-[#f19f17] hover:underline">Emitir</button>
-                    )}
+            <tbody className="divide-y divide-gray-100 bg-transparent">
+              {loading ? (
+                <tr>
+                  <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
+                    <div className="flex flex-col justify-center items-center gap-3">
+                      <div className="w-8 h-8 border-4 border-[#f19f17]/30 border-t-[#f19f17] rounded-full animate-spin"></div>
+                      <span className="text-sm font-medium">Carregando certificados...</span>
+                    </div>
                   </td>
                 </tr>
-              ))}
+              ) : error ? (
+                <tr>
+                  <td colSpan="6" className="px-6 py-8 text-center">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-50 text-red-600 border border-red-100">
+                      <span className="text-sm font-medium">{error}</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredCertificados.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Search className="h-8 w-8 text-gray-300" />
+                      <span className="text-gray-500 font-medium">Nenhum certificado encontrado.</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredCertificados.map((cert, index) => (
+                  <tr key={cert.id || index} className="hover:bg-white/60 transition-colors duration-150">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800">{cert.aluno}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">{cert.projeto}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{cert.curso}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {cert.dataEmissao ? new Date(cert.dataEmissao).toLocaleDateString('pt-BR') : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getConceitoBadge(cert.conceito)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                      <div className="flex items-center justify-center gap-4">
+                        <button className="text-gray-400 hover:text-blue-600 transition-colors hover:scale-110 transform" title="Visualizar Certificado">
+                          <Eye className="h-5 w-5" />
+                        </button>
+                        <button className="text-gray-400 hover:text-[#f19f17] transition-colors hover:scale-110 transform" title="Download em PDF">
+                          <Download className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
