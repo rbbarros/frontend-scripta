@@ -1,10 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  loginAluno,
-  loginProfessor,
-  loginEmpresa,
-  loginCoordenador,
+  login,
 } from "../../../lib/authService";
 
 const loginRoutes = {
@@ -29,21 +26,8 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const payload =
-        userType === "empresa"
-          ? { email_contato: email, senha }
-          : { email, senha };
-
-      let response;
-      if (userType === "aluno") {
-        response = await loginAluno(payload);
-      } else if (userType === "professor") {
-        response = await loginProfessor(payload);
-      } else if (userType === "coordenacao") {
-        response = await loginCoordenador(payload);
-      } else {
-        response = await loginEmpresa(payload);
-      }
+      const payload = { email, senha };
+      const response = await login(payload);
 
       localStorage.setItem("scripta_token", response.access_token);
       localStorage.setItem("scripta_user_type", userType);

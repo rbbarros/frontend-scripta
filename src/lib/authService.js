@@ -26,20 +26,8 @@ export function getCurrentUserType() {
 
 // ─── AUTH / LOGIN ───────────────────────────────────────────────────────────────
 
-export async function loginAluno({ email, senha }) {
-  return apiRequest("/alunos/login", { method: "POST", body: { email, senha } });
-}
-
-export async function loginProfessor({ email, senha }) {
-  return apiRequest("/professores/login", { method: "POST", body: { email, senha } });
-}
-
-export async function loginEmpresa({ email_contato, senha }) {
-  return apiRequest("/empresas/login", { method: "POST", body: { email_contato, senha } });
-}
-
-export async function loginCoordenador({ email, senha }) {
-  return apiRequest("/coordenadores/login", { method: "POST", body: { email, senha } });
+export async function login({ email, senha }) {
+  return apiRequest("/auth/login", { method: "POST", body: { email, senha } });
 }
 
 // ─── REGISTRO ──────────────────────────────────────────────────────────────────
