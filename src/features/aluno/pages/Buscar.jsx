@@ -1,11 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { getAlunoPerfil, getProjetos } from "../../../lib/authService";
+import React, { useMemo, useState } from "react";
+import { useAlunoDashboard } from "../hooks/useAlunoDashboard";
 
 export default function Buscar() {
-  const navigate = useNavigate();
-  const [perfil, setPerfil] = useState(null);
-  const [projetos, setProjetos] = useState([]);
+  const { projetos } = useAlunoDashboard();
   const [termo, setTermo] = useState("");
   
   // Filtros
@@ -13,17 +10,6 @@ export default function Buscar() {
   const [semestre, setSemestre] = useState("");
   const [ano, setAno] = useState("");
   const [area, setArea] = useState("");
-
-  useEffect(() => {
-    const token = localStorage.getItem("scripta_token");
-    if (!token) {
-      navigate("/");
-      return;
-    }
-
-    getAlunoPerfil().then(setPerfil).catch(() => navigate("/"));
-    getProjetos().then(setProjetos).catch(() => setProjetos([]));
-  }, [navigate]);
 
   const limparFiltros = () => {
     setCurso("");

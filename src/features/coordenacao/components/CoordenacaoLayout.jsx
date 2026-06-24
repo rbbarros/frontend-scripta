@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getCoordenadorPerfil } from "../../../lib/authService";
+import { getCoordenadorPerfil } from "../api/coordenacaoApi";
 
 export default function CoordenacaoLayout() {
   const navigate = useNavigate();

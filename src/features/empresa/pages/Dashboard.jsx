@@ -1,33 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { getEmpresaPerfil, getProjetos, getPortfolioList } from '../../../lib/authService';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Folder, Users, CheckCircle, Clock, ArrowRight, Settings, FileText, Award, BarChart2, TrendingUp, Briefcase } from 'lucide-react';
+import { useDashboardData } from '../hooks/useDashboardData';
 
 export default function Dashboard() {
-  const [perfil, setPerfil] = useState(null);
-  const [projetos, setProjetos] = useState([]);
-  const [portfolios, setPortfolios] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [perfilData, projetosData, portfoliosData] = await Promise.all([
-          getEmpresaPerfil(),
-          getProjetos(),
-          getPortfolioList()
-        ]);
-        
-        setPerfil(perfilData);
-        setProjetos(Array.isArray(projetosData) ? projetosData : []);
-        setPortfolios(Array.isArray(portfoliosData) ? portfoliosData : []);
-      } catch (error) {
-        console.error('Erro ao buscar dados do dashboard:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    
-    fetchData();
-  }, []);
+  const navigate = useNavigate();
+  const { perfil, projetos, portfolios, loading } = useDashboardData();
 
   if (loading) {
     return (
@@ -116,7 +94,10 @@ export default function Dashboard() {
         <div className="lg:col-span-2 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-gray-900">Projetos em Destaque</h2>
-            <button className="text-[#f19f17] hover:text-amber-700 font-bold text-sm flex items-center transition-colors">
+            <button 
+              onClick={() => navigate('/empresa/destaque')}
+              className="text-[#f19f17] hover:text-amber-700 font-bold text-sm flex items-center transition-colors"
+            >
               Ver todos <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
             </button>
           </div>
@@ -165,17 +146,26 @@ export default function Dashboard() {
             </div>
             
             <div className="space-y-3">
-              <button className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-[#f19f17] text-[#f19f17] font-bold hover:bg-amber-50 transition-colors">
+              <button 
+                onClick={() => navigate('/empresa/projetos')}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-[#f19f17] text-[#f19f17] font-bold hover:bg-amber-50 transition-colors"
+              >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                 Buscar projetos
               </button>
               
-              <button className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-[#f19f17] text-[#f19f17] font-bold hover:bg-amber-50 transition-colors">
+              <button 
+                onClick={() => navigate('/empresa/portfolios')}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-[#f19f17] text-[#f19f17] font-bold hover:bg-amber-50 transition-colors"
+              >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
                 Ver portfólios
               </button>
               
-              <button className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-[#f19f17] text-[#f19f17] font-bold hover:bg-amber-50 transition-colors">
+              <button 
+                onClick={() => navigate('/empresa/talentos')}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-[#f19f17] text-[#f19f17] font-bold hover:bg-amber-50 transition-colors"
+              >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 Identificar talentos
               </button>

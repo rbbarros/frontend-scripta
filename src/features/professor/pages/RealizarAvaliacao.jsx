@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { updateProjetoStatus, getProfessorPerfil } from "../../../lib/authService";
+import { updateProjetoStatus } from "../../../lib/projetosApi";;
+import { getProfessorPerfil } from "../api/professorApi";
 
 export default function RealizarAvaliacao({ projetoId, onClose }) {
   const [perfil, setPerfil] = useState(null);

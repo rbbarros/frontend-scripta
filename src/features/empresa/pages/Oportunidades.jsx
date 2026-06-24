@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getEmpresaPerfil, getProjetos } from "../../../lib/authService";
+import { getProjetos } from "../../../lib/projetosApi";;
+import { getEmpresaPerfil } from "../api/empresaApi";
 
 export default function Oportunidades() {
   const navigate = useNavigate();

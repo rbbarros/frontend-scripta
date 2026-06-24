@@ -1,35 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getAlunoPerfil, getProjetos } from "../../../lib/authService";
+import { useAlunoDashboard } from "../hooks/useAlunoDashboard";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [perfil, setPerfil] = useState(null);
-  const [projetos, setProjetos] = useState([]);
-  const [erro, setErro] = useState("");
-  const [carregando, setCarregando] = useState(true);
+  const { perfil, projetos, erro, loading } = useAlunoDashboard();
 
   useEffect(() => {
-    const token = localStorage.getItem("scripta_token");
-    if (!token) {
+    if (erro === "Não autenticado" || erro === "Não foi possível carregar seu perfil.") {
+      localStorage.removeItem("scripta_token");
+      localStorage.removeItem("scripta_user_type");
       navigate("/");
-      return;
     }
-
-    getAlunoPerfil()
-      .then((data) => setPerfil(data))
-      .catch((e) => {
-        setErro(e.message || "Não foi possível carregar seu perfil.");
-        localStorage.removeItem("scripta_token");
-        localStorage.removeItem("scripta_user_type");
-        navigate("/");
-      })
-      .finally(() => setCarregando(false));
-
-    getProjetos()
-      .then(setProjetos)
-      .catch(() => setProjetos([]));
-  }, [navigate]);
+  }, [erro, navigate]);
 
   // Simulando top projetos e notas
   const projetosEmDestaque = [
@@ -42,7 +25,7 @@ export default function Dashboard() {
     <>
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-          {carregando ? "Carregando..." : perfil?.nome ? `Olá, ${perfil.nome}` : "Bem-vindo ao Scripta"}
+          {loading ? "Carregando..." : perfil?.nome ? `Olá, ${perfil.nome}` : "Bem-vindo ao Scripta"}
         </h1>
         <p className="text-sm text-gray-500 mt-1">
           {erro || "Acesse rapidamente suas funcionalidades principais"}

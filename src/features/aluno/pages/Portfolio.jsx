@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { createPortfolio, getAlunoPerfil, getProjetos, getPortfolioList, deletarPortfolio, updatePortfolio } from "../../../lib/authService";
+import React, { useState } from "react";
+import { useAlunoPortfolio } from "../hooks/useAlunoPortfolio";
 
 const GRADIENTS = [
   "from-blue-500 to-blue-600",
@@ -12,32 +11,17 @@ const GRADIENTS = [
 ];
 
 export default function Portfolio() {
-  const navigate = useNavigate();
-  const [perfil, setPerfil] = useState(null);
-  const [projetos, setProjetos] = useState([]);
-  const [portfolios, setPortfolios] = useState([]);
+  const {
+    perfil, projetos, portfolios,
+    adicionarAoPortfolio, removerDoPortfolio, toggleVisibilidade
+  } = useAlunoPortfolio();
+  
   const [projetoId, setProjetoId] = useState("");
   const [visibilidade, setVisibilidade] = useState("publico");
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [showForm, setShowForm] = useState(false);
-
-  useEffect(() => {
-    const token = localStorage.getItem("scripta_token");
-    if (!token) { navigate("/"); return; }
-    getAlunoPerfil().then(setPerfil).catch((e) => {
-      localStorage.removeItem("scripta_token");
-      localStorage.removeItem("scripta_user_type");
-      navigate("/");
-    });
-    carregarDados();
-  }, [navigate]);
-
-  const carregarDados = () => {
-    getProjetos().then(setProjetos).catch(() => setProjetos([]));
-    getPortfolioList().then(setPortfolios).catch(() => setPortfolios([]));
-  };
 
   const projetosDoAluno = projetos.filter(
     (p) => perfil?.nome && p.aluno_responsavel?.toLowerCase().includes(perfil.nome.toLowerCase())
@@ -48,14 +32,12 @@ export default function Portfolio() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErro(""); setSucesso("");
-    if (!perfil?.id) { setErro("Perfil não carregado."); return; }
     setSalvando(true);
     try {
-      await createPortfolio({ aluno_id: perfil.id, projeto_id: Number(projetoId), visibilidade });
+      await adicionarAoPortfolio(projetoId, visibilidade);
       setSucesso("Projeto adicionado ao portfólio!");
       setProjetoId(""); setVisibilidade("publico");
       setShowForm(false);
-      carregarDados();
     } catch (e) {
       setErro(e.message || "Erro ao adicionar ao portfólio.");
     } finally {
@@ -65,16 +47,13 @@ export default function Portfolio() {
 
   const handleRemover = async (id) => {
     if (!window.confirm("Remover este projeto do portfólio?")) return;
-    try { await deletarPortfolio(id); carregarDados(); }
+    try { await removerDoPortfolio(id); }
     catch (e) { alert("Erro ao remover: " + e.message); }
   };
 
   const handleToggleVisibilidade = async (item) => {
-    const nova = item.visibilidade === "publico" ? "privado" : "publico";
-    try {
-      await updatePortfolio(item.id, { visibilidade: nova });
-      carregarDados();
-    } catch (e) { alert("Erro ao atualizar: " + e.message); }
+    try { await toggleVisibilidade(item); }
+    catch (e) { alert("Erro ao atualizar: " + e.message); }
   };
 
   const totalPublicos = meusPortfolios.filter(p => p.visibilidade === "publico").length;

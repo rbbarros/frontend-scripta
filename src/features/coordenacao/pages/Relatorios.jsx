@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Folder, BarChart2, Filter, FileText, Search, Download } from 'lucide-react';
-import { apiRequest } from '../../../lib/api';
+import { useCoordenacaoRelatorios } from '../hooks/useCoordenacaoRelatorios';
 
 const Relatorios = () => {
+  const { isLoading, generateReport } = useCoordenacaoRelatorios();
   const [reportType, setReportType] = useState('projetos');
   const [exportFormat, setExportFormat] = useState('PDF');
   
@@ -16,33 +17,19 @@ const Relatorios = () => {
     search: ''
   });
 
-  const [isLoading, setIsLoading] = useState(false);
-
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
   };
 
   const handleGenerateReport = async () => {
-    setIsLoading(true);
     try {
-      // Fetch reports using apiRequest
-      const response = await apiRequest('/relatorios/projetos', {
-        method: 'GET',
-        params: {
-          ...filters,
-          type: reportType,
-          format: exportFormat.toLowerCase()
-        }
-      });
-      
+      const response = await generateReport(reportType, exportFormat, filters);
       console.log('Report generated successfully:', response);
       alert(`${exportFormat} gerado com sucesso!`);
     } catch (error) {
       console.error('Error generating report:', error);
       alert('Erro ao gerar o relatório.');
-    } finally {
-      setIsLoading(false);
     }
   };
 

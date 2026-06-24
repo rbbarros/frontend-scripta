@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getProjetos } from "../../../lib/authService";
+import { getProjetos } from "../../../lib/projetosApi";;
 
 export default function Ranking() {
   const navigate = useNavigate();

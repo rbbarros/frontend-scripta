@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getProfessorPerfil } from "../../../lib/authService";
+import { getProfessorPerfil } from "../api/professorApi";
+import { BookOpen, Users, ClipboardCheck, LogOut, Menu, UserCircle, Bell, Settings } from "lucide-react";
 
 export default function ProfessorLayout() {
   const navigate = useNavigate();

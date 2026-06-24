@@ -1,18 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { getAlunoPerfil, getProjetos } from "../../../lib/authService";
+import React, { useMemo, useState } from "react";
+import { useAlunoDashboard } from "../hooks/useAlunoDashboard";
 
 export default function Certificados() {
-  const navigate = useNavigate();
-  const [perfil, setPerfil] = useState(null);
-  const [projetos, setProjetos] = useState([]);
+  const { perfil, projetos } = useAlunoDashboard();
   const [baixando, setBaixando] = useState(null);
-
-  useEffect(() => {
-    if (!localStorage.getItem("scripta_token")) { navigate("/"); return; }
-    getAlunoPerfil().then(setPerfil).catch(() => navigate("/"));
-    getProjetos().then(setProjetos).catch(() => setProjetos([]));
-  }, [navigate]);
 
   const projetosDoAluno = useMemo(
     () => projetos.filter((p) =>

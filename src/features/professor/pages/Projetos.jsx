@@ -1,16 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { getProjetos } from "../../../lib/authService";
+import { useProfessorProjetos } from "../hooks/useProfessorProjetos";
 
 export default function Projetos() {
-  const [projetos, setProjetos] = useState([]);
+  const { projetos, loading } = useProfessorProjetos();
   const [busca, setBusca] = useState("");
-
-  useEffect(() => {
-    getProjetos()
-      .then((data) => setProjetos(Array.isArray(data) ? data : []))
-      .catch(() => setProjetos([]));
-  }, []);
 
   const mockProjetos = [
     { id: 1, titulo: "Sistema de IA para Diagnóstico Médico", curso: "Engenharia de Software - ESW-2A - 1º/2025 - Matutino", integrantes: 4, status: "Pendente", color: "bg-amber-50 text-amber-700" },

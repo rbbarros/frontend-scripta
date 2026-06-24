@@ -1,20 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import { getProfessorPerfil, getProjetos } from "../../../lib/authService";
+import { useProfessorDashboard } from "../hooks/useProfessorDashboard";
 
 export default function Dashboard() {
-  const [perfil, setPerfil] = useState(null);
-  const [projetos, setProjetos] = useState([]);
-
-  useEffect(() => {
-    getProfessorPerfil()
-      .then(setPerfil)
-      .catch(() => {});
-
-    getProjetos()
-      .then((data) => setProjetos(Array.isArray(data) ? data : []))
-      .catch(() => setProjetos([]));
-  }, []);
+  const { perfil, projetos, loading } = useProfessorDashboard();
 
   const aguardando = projetos.filter(p => (p.status || "").toLowerCase() === "aguardando avaliação").length || 8;
   const avaliados = projetos.filter(p => (p.status || "").toLowerCase() === "avaliado").length || 34;

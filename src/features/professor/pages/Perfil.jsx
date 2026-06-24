@@ -1,42 +1,36 @@
 import React, { useEffect, useState } from "react";
-import { getProfessorPerfil, updateProfessorPerfil } from "../../../lib/authService";
+import { useProfessorPerfil } from "../hooks/useProfessorPerfil";
 
 export default function Perfil() {
-  const [perfil, setPerfil] = useState(null);
+  const { perfil, updatePerfil } = useProfessorPerfil();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
     area_atuacao: ""
   });
-  const [loading, setLoading] = useState(false);
+  const [loadingForm, setLoadingForm] = useState(false);
 
   useEffect(() => {
-    getProfessorPerfil()
-      .then((data) => {
-        setPerfil(data);
-        if (data) {
-          setFormData({
-            nome: data.nome || "",
-            email: data.email || "",
-            area_atuacao: data.area_atuacao || ""
-          });
-        }
-      })
-      .catch(() => {});
-  }, []);
+    if (perfil && !isEditing) {
+      setFormData({
+        nome: perfil.nome || "",
+        email: perfil.email || "",
+        area_atuacao: perfil.area_atuacao || ""
+      });
+    }
+  }, [perfil, isEditing]);
 
   const handleEdit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setLoadingForm(true);
     try {
-      await updateProfessorPerfil(formData);
-      setPerfil((prev) => ({ ...prev, ...formData }));
+      await updatePerfil(formData);
       setIsEditing(false);
     } catch (err) {
       alert("Erro ao atualizar o perfil.");
     } finally {
-      setLoading(false);
+      setLoadingForm(false);
     }
   };
 
@@ -115,8 +109,8 @@ export default function Perfil() {
                   <input type="text" value={formData.area_atuacao} onChange={e => setFormData({...formData, area_atuacao: e.target.value})} className="w-full p-3 border rounded-xl text-sm outline-none focus:border-amber-500" />
                 </div>
                 <div className="pt-4 border-t border-gray-100">
-                  <button type="submit" disabled={loading} className="w-full bg-[#f19f17] text-white py-3 rounded-xl font-bold disabled:opacity-50">
-                    {loading ? "Salvando..." : "Salvar Alterações"}
+                  <button type="submit" disabled={loadingForm} className="w-full bg-[#f19f17] text-white py-3 rounded-xl font-bold disabled:opacity-50">
+                    {loadingForm ? "Salvando..." : "Salvar Alterações"}
                   </button>
                 </div>
               </form>

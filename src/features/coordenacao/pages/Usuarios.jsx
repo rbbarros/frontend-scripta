@@ -1,58 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Edit2, X, Search } from 'lucide-react';
-import { apiRequest } from '../../../lib/api';
+import { useCoordenacaoUsuarios } from '../hooks/useCoordenacaoUsuarios';
 
 const Usuarios = () => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { users, loading, updateUser } = useCoordenacaoUsuarios();
   const [searchTerm, setSearchTerm] = useState('');
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      const [coordenadores, alunos, professores, empresas] = await Promise.all([
-        apiRequest('/coordenadores/').catch(() => []),
-        apiRequest('/alunos/').catch(() => []),
-        apiRequest('/professores/').catch(() => []),
-        apiRequest('/empresas/').catch(() => []),
-      ]);
-      
-      const formatData = (data, role) => {
-        if (!Array.isArray(data)) return [];
-        return data.map(item => ({
-          ...item,
-          // Normaliza os campos para a tabela
-          displayName: item.nome || item.nome_completo || item.razao_social || 'Usuário',
-          displayEmail: item.email || item.email_institucional || 'Sem e-mail',
-          displayCourse: item.curso || '-',
-          isActive: item.ativo !== false, // Assume true se for undefined
-          role: role,
-          originalType: role.toLowerCase()
-        }));
-      };
-
-      const combined = [
-        ...formatData(coordenadores, 'Coordenador'),
-        ...formatData(alunos, 'Aluno'),
-        ...formatData(professores, 'Professor'),
-        ...formatData(empresas, 'Empresa'),
-      ];
-
-      setUsers(combined);
-    } catch (error) {
-      console.error('Erro ao buscar usuários:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleEditClick = (user) => {
     setEditingUser({ ...user });
@@ -66,41 +22,9 @@ const Usuarios = () => {
 
   const handleSave = async () => {
     try {
-      // Determina a rota baseada no tipo do usuário
-      let endpoint = '';
-      if (editingUser.originalType === 'coordenador') endpoint = `/coordenadores/${editingUser.id}/`;
-      else if (editingUser.originalType === 'aluno') endpoint = `/alunos/${editingUser.id}/`;
-      else if (editingUser.originalType === 'professor') endpoint = `/professores/${editingUser.id}/`;
-      else if (editingUser.originalType === 'empresa') endpoint = `/empresas/${editingUser.id}/`;
-
-      if (endpoint) {
-        // Prepara o payload mantendo os dados originais e atualizando os alterados
-        const payload = { ...editingUser };
-        
-        if (editingUser.nome !== undefined) payload.nome = editingUser.displayName;
-        if (editingUser.nome_completo !== undefined) payload.nome_completo = editingUser.displayName;
-        if (editingUser.razao_social !== undefined) payload.razao_social = editingUser.displayName;
-        
-        if (editingUser.email !== undefined) payload.email = editingUser.displayEmail;
-        if (editingUser.email_institucional !== undefined) payload.email_institucional = editingUser.displayEmail;
-        
-        payload.curso = editingUser.displayCourse;
-        payload.ativo = editingUser.isActive;
-
-        await apiRequest(endpoint, {
-          method: 'PUT',
-          body: JSON.stringify(payload),
-          headers: { 'Content-Type': 'application/json' }
-        });
-
-        // Atualiza o estado local
-        setUsers(users.map(u => 
-          (u.id === editingUser.id && u.role === editingUser.role) ? editingUser : u
-        ));
-        closeModal();
-      }
+      await updateUser(editingUser);
+      closeModal();
     } catch (error) {
-      console.error('Erro ao atualizar usuário:', error);
       alert('Erro ao salvar as alterações. Tente novamente.');
     }
   };

@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getEmpresaPerfil } from "../../../lib/authService";
+import { getEmpresaPerfil } from "../api/empresaApi";
 
 export default function EmpresaLayout() {
   const navigate = useNavigate();

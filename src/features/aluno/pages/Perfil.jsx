@@ -1,23 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getAlunoPerfil, getProjetos } from "../../../lib/authService";
+import { useAlunoDashboard } from "../hooks/useAlunoDashboard";
 
 export default function Perfil() {
   const navigate = useNavigate();
-  const [perfil, setPerfil] = useState(null);
-  const [projetos, setProjetos] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!localStorage.getItem("scripta_token")) { navigate("/"); return; }
-    
-    Promise.allSettled([getAlunoPerfil(), getProjetos()])
-      .then(([perfilRes, projRes]) => {
-        if (perfilRes.status === "fulfilled") setPerfil(perfilRes.value);
-        if (projRes.status === "fulfilled") setProjetos(Array.isArray(projRes.value) ? projRes.value : []);
-      })
-      .finally(() => setLoading(false));
-  }, [navigate]);
+  const { perfil, projetos, loading } = useAlunoDashboard();
 
   const meusProjetos = projetos.filter((p) => perfil?.id && p.aluno_responsavel_id === perfil.id);
   const projetosAprovados = meusProjetos.filter(p => p.status === "aprovado");

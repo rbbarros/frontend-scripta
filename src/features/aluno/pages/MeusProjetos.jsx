@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { getProjetos, getAlunoPerfil } from "../../../lib/authService";
+import { useAlunoProjetos } from "../hooks/useAlunoProjetos";
 
 const STATUS_TABS = [
   { id: "rascunho",    label: "Rascunhos",   color: "bg-[#f19f17] text-white border-[#f19f17]",      inactive: "text-gray-500" },
@@ -31,31 +31,15 @@ function statusLabel(status) {
 }
 
 export default function MeusProjetos() {
-  const [perfil, setPerfil] = useState(null);
-  const [projetos, setProjetos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { meusProjetos, loading } = useAlunoProjetos();
   const [activeTab, setActiveTab] = useState("rascunho");
 
-  useEffect(() => {
-    Promise.allSettled([getAlunoPerfil(), getProjetos()])
-      .then(([perfilRes, projetosRes]) => {
-        if (perfilRes.status === "fulfilled") setPerfil(perfilRes.value);
-        if (projetosRes.status === "fulfilled") setProjetos(Array.isArray(projetosRes.value) ? projetosRes.value : []);
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  // Filtra apenas os projetos do aluno logado
-  const meusProjetoss = projetos.filter((p) =>
-    perfil?.id && p.aluno_responsavel_id === perfil.id
-  );
-
-  const projetosFiltrados = meusProjetoss.filter(
+  const projetosFiltrados = meusProjetos.filter(
     (p) => (p.status || "rascunho").toLowerCase() === activeTab
   );
 
   const countByStatus = (tabId) =>
-    meusProjetoss.filter((p) => (p.status || "rascunho").toLowerCase() === tabId).length;
+    meusProjetos.filter((p) => (p.status || "rascunho").toLowerCase() === tabId).length;
 
   return (
     <div className="max-w-5xl mx-auto">

@@ -1,41 +1,22 @@
-import React, { useState, useEffect } from "react";
-import { apiRequest } from "../../../lib/api";
+import React, { useState } from "react";
+import { useCoordenacaoProjetos } from "../hooks/useCoordenacaoProjetos";
 import { Trophy, Medal, Search, Filter } from "lucide-react";
 
 export default function Ranking() {
-  const [projetos, setProjetos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { projetos: allProjetos, loading } = useCoordenacaoProjetos();
   const [filtros, setFiltros] = useState({
     curso: "Todos",
     turma: "Todos",
     semestre: "Todos"
   });
 
-  useEffect(() => {
-    fetchRanking();
-  }, [filtros]);
-
-  const fetchRanking = async () => {
-    setLoading(true);
-    try {
-      const data = await apiRequest("/projetos").catch(() => []);
-      
-      const mockProjetos = [
-        { id: 1, titulo: "Plataforma de Blockchain para Certificados", curso: "Ciência da Computação", nota: 96, conceito: "Excelente", avaliacoes: 3 },
-        { id: 2, titulo: "Sistema de IA para Diagnóstico Médico", curso: "Engenharia de Software", nota: 92, conceito: "Excelente", avaliacoes: 4 },
-        { id: 3, titulo: "App de Realidade Aumentada Educacional", curso: "Design Digital", nota: 88, conceito: "Ótimo", avaliacoes: 2 },
-        { id: 4, titulo: "Gestão de Resíduos Inteligente", curso: "Engenharia Ambiental", nota: 85, conceito: "Ótimo", avaliacoes: 3 },
-        { id: 5, titulo: "Automação Residencial IoT", curso: "Engenharia Elétrica", nota: 82, conceito: "Bom", avaliacoes: 2 },
-        { id: 6, titulo: "Marketplace de Produtos Sustentáveis", curso: "Administração", nota: 79, conceito: "Bom", avaliacoes: 2 }
-      ];
-
-      setProjetos(data.length >= 3 ? data : mockProjetos);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Mocking extra ranking specific data
+  const projetos = allProjetos.map((p, idx) => ({
+    ...p,
+    nota: p.nota || (96 - idx * 2), // mock score
+    conceito: p.conceito || (idx < 2 ? "Excelente" : idx < 4 ? "Ótimo" : "Bom"),
+    avaliacoes: p.avaliacoes?.length || Math.floor(Math.random() * 5) + 1
+  })).sort((a, b) => b.nota - a.nota);
 
   const getBadgeColor = (conceito) => {
     switch (conceito?.toLowerCase()) {

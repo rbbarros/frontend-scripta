@@ -1,25 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { getCoordenadores, getEmpresas, getPortfolioList, getProjetos, getProfessores } from '../../../lib/authService';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useCoordenacaoDashboard } from '../hooks/useCoordenacaoDashboard';
 import { Folder, Users, CheckCircle, Clock, ArrowRight, Settings, FileText, Award, BarChart2 } from 'lucide-react';
 import './Dashboard.css';
 
 const Dashboard = () => {
-  const [projetos, setProjetos] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await getProjetos();
-        setProjetos(data || []);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const navigate = useNavigate();
+  const { perfil, projetos, loading } = useCoordenacaoDashboard();
 
   const atividadesRecentes = [
     {
@@ -128,19 +115,19 @@ const Dashboard = () => {
           <div className="quick-access-section">
             <h2>Acesso Rápido</h2>
             <div className="quick-access-buttons">
-              <button className="amber-outline-btn">
+              <button className="amber-outline-btn" onClick={() => navigate('/coordenacao/usuarios')}>
                 <Settings size={18} />
                 Gerenciar usuários
               </button>
-              <button className="amber-outline-btn">
+              <button className="amber-outline-btn" onClick={() => navigate('/coordenacao/relatorios')}>
                 <FileText size={18} />
                 Gerar relatório
               </button>
-              <button className="amber-outline-btn">
+              <button className="amber-outline-btn" onClick={() => navigate('/coordenacao/certificados')}>
                 <Award size={18} />
                 Emitir certificado
               </button>
-              <button className="amber-outline-btn">
+              <button className="amber-outline-btn" onClick={() => navigate('/coordenacao/monitoramento')}>
                 <BarChart2 size={18} />
                 Ver indicadores
               </button>

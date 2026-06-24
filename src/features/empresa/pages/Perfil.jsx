@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getEmpresaPerfil, updateEmpresaPerfil } from "../../../lib/authService";
+import { getEmpresaPerfil, updateEmpresaPerfil } from "../api/empresaApi";
 
 export default function Perfil() {
   const [perfil, setPerfil] = useState(null);

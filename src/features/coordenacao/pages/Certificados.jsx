@@ -1,31 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Search, Plus, Eye, Download } from 'lucide-react';
-import { apiRequest } from '../../../lib/api';
+import { useCoordenacaoCertificados } from '../hooks/useCoordenacaoCertificados';
 
 export default function Certificados() {
-  const [certificados, setCertificados] = useState([]);
+  const { certificados, loading, error } = useCoordenacaoCertificados();
   const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    fetchCertificados();
-  }, []);
-
-  const fetchCertificados = async () => {
-    try {
-      setLoading(true);
-      const data = await apiRequest('/certificados/emitidos');
-      // Handle either array response or { data: [...] } structure
-      setCertificados(Array.isArray(data) ? data : (data?.data || []));
-      setError(null);
-    } catch (err) {
-      console.error(err);
-      setError('Erro ao carregar certificados.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const filteredCertificados = certificados.filter(cert => {
     const term = searchTerm.toLowerCase();

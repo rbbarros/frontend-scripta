@@ -1,14 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { getProjetos } from "../../../lib/authService";
+import React from "react";
+import { useProfessorRanking } from "../hooks/useProfessorRanking";
 
 export default function Ranking() {
-  const [projetos, setProjetos] = useState([]);
-
-  useEffect(() => {
-    getProjetos()
-      .then((data) => setProjetos(Array.isArray(data) ? data : []))
-      .catch(() => setProjetos([]));
-  }, []);
+  const { projetos, loading } = useProfessorRanking();
 
   const rankingCompleto = [
     { rank: 1, titulo: "Plataforma de Blockchain para Certificados", curso: "Ciência da Computação", media: "96%", avaliacoes: 3, badge: "Excelente", badgeColor: "text-emerald-600 bg-emerald-50", icon: "🏆", border: "border-[#f19f17]" },

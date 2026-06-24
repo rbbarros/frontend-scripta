@@ -1,19 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { getProjetos, getProfessorPerfil } from "../../../lib/authService";
+import React from "react";
+import { useProfessorAvaliacoes } from "../hooks/useProfessorAvaliacoes";
 
 export default function Avaliacoes() {
-  const [projetos, setProjetos] = useState([]);
-  const [perfil, setPerfil] = useState(null);
-
-  useEffect(() => {
-    getProjetos()
-      .then((data) => setProjetos(Array.isArray(data) ? data : []))
-      .catch(() => setProjetos([]));
-      
-    getProfessorPerfil()
-      .then(setPerfil)
-      .catch(() => {});
-  }, []);
+  const { projetos, perfil, loading } = useProfessorAvaliacoes();
 
   const profName = perfil?.nome || "Ana Silva";
 

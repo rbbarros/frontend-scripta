@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { createProjeto, getAlunoPerfil, getProfessores, addIntegranteAoProjeto } from "../../../lib/authService";
+import { useAlunoSubmeter } from "../hooks/useAlunoSubmeter";
 
 export default function Submeter() {
   const navigate = useNavigate();
-  const [perfil, setPerfil] = useState(null);
-  const [professores, setProfessores] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const { perfil, professores, loading, submitProjeto } = useAlunoSubmeter();
   const [formData, setFormData] = useState({
     titulo: "",
     descricao: "",
@@ -19,16 +17,10 @@ export default function Submeter() {
   });
 
   useEffect(() => {
-    if (!localStorage.getItem("scripta_token")) { navigate("/"); return; }
-    getAlunoPerfil()
-      .then((data) => {
-        setPerfil(data);
-        // Pré-preenche curso com o do perfil do aluno
-        setFormData((prev) => ({ ...prev, curso: data.curso || "" }));
-      })
-      .catch(() => { navigate("/"); });
-    getProfessores().then(setProfessores).catch(() => setProfessores([]));
-  }, [navigate]);
+    if (perfil?.curso && !formData.curso) {
+      setFormData((prev) => ({ ...prev, curso: perfil.curso }));
+    }
+  }, [perfil, formData.curso]);
 
   const handleAddLink = () => {
     setFormData({ ...formData, links: [...formData.links, { rotulo: "", url: "" }] });
@@ -42,10 +34,8 @@ export default function Submeter() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!perfil?.id) { alert("Perfil não carregado, tente novamente."); return; }
     if (!formData.professor_orientador_id) { alert("Selecione um professor orientador."); return; }
 
-    setLoading(true);
     try {
       const payload = {
         titulo: formData.titulo,
@@ -54,16 +44,13 @@ export default function Submeter() {
         turma: formData.turma,
         semestre: formData.semestre,
         area_conhecimento: formData.area_conhecimento,
-        aluno_responsavel_id: perfil.id,
         professor_orientador_id: Number(formData.professor_orientador_id),
       };
-      await createProjeto(payload);
+      await submitProjeto(payload);
       alert("Projeto submetido com sucesso!");
-      navigate("/aluno/projetos");
+      navigate("/aluno/meus-projetos");
     } catch (err) {
       alert("Erro ao submeter o projeto: " + (err.message || "Tente novamente."));
-    } finally {
-      setLoading(false);
     }
   };
 
