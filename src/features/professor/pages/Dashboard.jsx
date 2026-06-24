@@ -31,7 +31,7 @@ export default function Dashboard() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Dashboard</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Bem vindo, Prof. {perfil?.nome?.split(" ")[0] || "Ana Silva"}. Acompanhe suas atividades de avaliação.
+          Bem-vindo, Prof. {perfil?.nome?.split(" ")[0] || "Ana Silva"}. Acompanhe suas atividades de avaliação.
         </p>
       </div>
 
@@ -61,7 +61,7 @@ export default function Dashboard() {
         {/* Card 3 */}
         <div className="bg-white rounded-3xl border border-gray-100 p-6 flex items-center gap-5 shadow-sm">
           <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
           </div>
           <div>
             <span className="block text-2xl font-bold text-gray-900 leading-none mb-1">{total}</span>
@@ -76,7 +76,7 @@ export default function Dashboard() {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-bold text-gray-800">Projetos Avaliados Recentemente</h2>
               <Link to="/professor/avaliacoes" className="text-sm font-semibold text-gray-500 hover:text-[#f19f17] flex items-center gap-1 transition-colors">
-                Ver todos <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                Ver todos →
               </Link>
             </div>
             
@@ -114,7 +114,7 @@ export default function Dashboard() {
                  Histórico de avaliações
               </Link>
               <Link to="/professor/ranking" className="flex items-center gap-3 w-full p-4 border border-[#f19f17] rounded-2xl text-sm font-semibold text-[#f19f17] hover:bg-amber-50 transition-colors">
-                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 1.1-.9 2-2 2H6"></path><path d="M14 14.66V17c0 1.1.9 2 2 2h2"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path></svg>
                  Ver ranking
               </Link>
             </div>
@@ -124,8 +124,8 @@ export default function Dashboard() {
             <h2 className="text-lg font-bold text-gray-800 mb-4">Notificações</h2>
             <div className="space-y-4">
               <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl">
-                <p className="text-sm font-semibold text-gray-900">3 projetos aguardam avaliação</p>
-                <p className="text-xs text-amber-600 mt-1">Prazos 5 dias</p>
+                <p className="text-sm font-semibold text-amber-600">3 projetos aguardam avaliação</p>
+                <p className="text-xs text-amber-600 mt-1">Prazo: 5 dias</p>
               </div>
               <div className="p-4 bg-white border border-gray-100 rounded-2xl">
                 <p className="text-sm font-semibold text-gray-900">Novo projeto submetido em ESW-2A</p>

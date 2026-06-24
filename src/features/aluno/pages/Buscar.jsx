@@ -152,13 +152,13 @@ export default function Buscar() {
                     </span>
                   </div>
                   
-                  <p className="text-sm text-gray-500 mb-4 line-clamp-2">
+                  <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                     {projeto.descricao || "Este projeto não possui uma descrição fornecida. Para saber mais detalhes, acesse a página do projeto ou entre em contato com os autores."}
                   </p>
 
-                  <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-gray-400">
+                  <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-gray-500">
                     <span className="flex items-center gap-1">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>
                       {projeto._UI?.curso}
                     </span>
                     <span className="flex items-center gap-1">

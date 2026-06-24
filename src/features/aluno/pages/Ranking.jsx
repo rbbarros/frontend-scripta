@@ -60,8 +60,11 @@ export default function Ranking() {
                 <p className="text-xs text-gray-500">{top3[1]._curso}</p>
               </div>
               <div className="mt-6 flex items-center gap-4 text-sm">
-                <span className="font-bold text-[#f19f17]">⭐ {top3[1]._nota.toFixed(1)}</span>
-                <span className="text-gray-400">{top3[1]._avaliacoes} avaliações</span>
+                <span className="font-bold text-gray-800 flex items-center gap-1">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#f19f17]"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                  {top3[1]._nota.toFixed(1)}
+                </span>
+                <span className="text-gray-500">{top3[1]._avaliacoes} avaliações</span>
               </div>
             </div>
           )}
@@ -74,9 +77,12 @@ export default function Ranking() {
               <h3 className="text-base font-bold text-gray-900 mb-1">{top3[0].titulo}</h3>
               <p className="text-xs text-gray-500">{top3[0]._curso}</p>
             </div>
-            <div className="mt-6 flex items-center gap-4 text-sm bg-amber-50 px-4 py-2 rounded-full border border-amber-100">
-              <span className="font-bold text-[#c67c00]">⭐ {top3[0]._nota.toFixed(1)}</span>
-              <span className="text-amber-700 font-medium">{top3[0]._avaliacoes} avaliações</span>
+            <div className="mt-6 flex items-center gap-4 text-sm bg-white px-4 py-2 rounded-full border border-gray-100">
+              <span className="font-bold text-gray-800 flex items-center gap-1">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#f19f17]"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                {top3[0]._nota.toFixed(1)}
+              </span>
+              <span className="text-gray-500 font-medium">{top3[0]._avaliacoes} avaliações</span>
             </div>
           </div>
 
@@ -90,8 +96,11 @@ export default function Ranking() {
                 <p className="text-xs text-gray-500">{top3[2]._curso}</p>
               </div>
               <div className="mt-6 flex items-center gap-4 text-sm">
-                <span className="font-bold text-[#f19f17]">⭐ {top3[2]._nota.toFixed(1)}</span>
-                <span className="text-gray-400">{top3[2]._avaliacoes} avaliações</span>
+                <span className="font-bold text-gray-800 flex items-center gap-1">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#f19f17]"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                  {top3[2]._nota.toFixed(1)}
+                </span>
+                <span className="text-gray-500">{top3[2]._avaliacoes} avaliações</span>
               </div>
             </div>
           )}
@@ -158,12 +167,13 @@ export default function Ranking() {
                 
                 <div className="flex items-center gap-6 text-right">
                   <div>
-                    <div className="text-sm font-bold text-[#f19f17] flex items-center justify-end gap-1">
-                      ⭐ {projeto._nota.toFixed(1)}
+                    <div className="text-sm font-bold text-gray-800 flex items-center justify-end gap-1">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#f19f17]"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                      {projeto._nota.toFixed(1)}
                     </div>
                     <div className="text-[10px] text-gray-400 uppercase tracking-wide">Nota</div>
                   </div>
-                  <div className="w-12">
+                  <div className="w-16">
                     <div className="text-sm font-bold text-gray-700">{projeto._avaliacoes}</div>
                     <div className="text-[10px] text-gray-400 uppercase tracking-wide">Avaliações</div>
                   </div>

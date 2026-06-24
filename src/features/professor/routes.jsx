@@ -5,6 +5,7 @@ import Projetos from "./pages/Projetos";
 import Avaliacoes from "./pages/Avaliacoes";
 import Ranking from "./pages/Ranking";
 import Perfil from "./pages/Perfil";
+import ProjetoDetalhes from "./pages/ProjetoDetalhes";
 
 export default function ProfessorRoutes() {
   return (
@@ -12,6 +13,7 @@ export default function ProfessorRoutes() {
       <Route element={<ProfessorLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="projetos" element={<Projetos />} />
+        <Route path="projetos/:id" element={<ProjetoDetalhes />} />
         <Route path="avaliacoes" element={<Avaliacoes />} />
         <Route path="ranking" element={<Ranking />} />
         <Route path="perfil" element={<Perfil />} />

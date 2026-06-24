@@ -115,7 +115,7 @@ export default function MeusProjetos() {
                 <p className="text-sm text-gray-600 leading-relaxed mb-6 line-clamp-2">{projeto.descricao}</p>
               )}
 
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between pt-4 border-t border-gray-100 gap-3">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between pt-4 gap-3">
                 <span className="text-xs text-gray-400">
                   Prof. {projeto.professor_orientador || "Orientador não informado"} · {projeto.area_conhecimento || "Área não informada"}
                 </span>
@@ -131,6 +131,48 @@ export default function MeusProjetos() {
                   </Link>
                 )}
               </div>
+
+              {/* Seção de Avaliações (apenas se não for rascunho) */}
+              {activeTab !== "rascunho" && (
+                <div className="mt-6 pt-6 border-t border-gray-100">
+                  <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Avaliações dos Professores</h4>
+                  <div className="space-y-2">
+                    {/* Mock de avaliadores para bater com o layout */}
+                    <div className="flex items-center justify-between bg-gray-50/50 rounded-xl p-3 border border-gray-100">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-800">Prof. Ana Silva</p>
+                          <p className="text-xs text-gray-500">28/05/2025</p>
+                        </div>
+                      </div>
+                      <span className="flex items-center gap-1 bg-emerald-50 border border-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        Aprovado
+                      </span>
+                    </div>
+                    {activeTab === "aprovado" && (
+                      <div className="flex items-center justify-between bg-gray-50/50 rounded-xl p-3 border border-gray-100">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-800">Prof. Carlos Mendes</p>
+                            <p className="text-xs text-gray-500">26/05/2025</p>
+                          </div>
+                        </div>
+                        <span className="flex items-center gap-1 bg-emerald-50 border border-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                          Aprovado
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           ))
         ) : (

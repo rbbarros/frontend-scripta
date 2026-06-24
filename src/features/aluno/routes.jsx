@@ -7,6 +7,7 @@ import Certificados from "./pages/Certificados";
 import Portfolio from "./pages/Portfolio";
 import MeusProjetos from "./pages/MeusProjetos";
 import Submeter from "./pages/Submeter";
+import Perfil from "./pages/Perfil";
 
 export default function AlunoRoutes() {
   return (
@@ -19,6 +20,7 @@ export default function AlunoRoutes() {
         <Route path="portfolio" element={<Portfolio />} />
         <Route path="projetos" element={<MeusProjetos />} />
         <Route path="submeter" element={<Submeter />} />
+        <Route path="perfil" element={<Perfil />} />
       </Route>
     </Routes>
   );
