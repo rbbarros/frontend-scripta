@@ -6,6 +6,7 @@ import Usuarios from "./pages/Usuarios";
 import Projetos from "./pages/Projetos";
 import Certificados from "./pages/Certificados";
 import Monitoramento from "./pages/Monitoramento";
+import Ranking from "./pages/Ranking";
 
 export default function CoordenacaoRoutes() {
   return (
@@ -17,6 +18,7 @@ export default function CoordenacaoRoutes() {
         <Route path="monitoramento" element={<Monitoramento />} />
         <Route path="relatorios" element={<Relatorios />} />
         <Route path="certificados" element={<Certificados />} />
+        <Route path="ranking" element={<Ranking />} />
       </Route>
     </Routes>
   );
