@@ -18,8 +18,8 @@ export default function AlunoLayout() {
         <div className="max-w-7xl w-full mx-auto px-8 py-4 flex items-center justify-between">
           {/* LOGO SCRIPTADA */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#f19f17] rounded-xl flex items-center justify-center text-white text-xl shadow-sm">
-              🎓
+            <div className="w-8 h-8 bg-[#f19f17] rounded-lg flex items-center justify-center text-white text-sm">
+              <i className="fas fa-graduation-cap text-white-900"></i>
             </div>
             <span className="text-xl font-bold text-gray-900 tracking-tight">
               Scripta
@@ -32,64 +32,75 @@ export default function AlunoLayout() {
               to="/aluno"
               className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${location.pathname === "/aluno" || location.pathname === "/aluno/" ? "bg-amber-50 text-[#f19f17] font-semibold" : "hover:bg-gray-50 hover:text-gray-800"}`}
             >
-              🏠 Início
+              <i class="fas fa-home"></i>
+              Início
             </Link>
 
             <Link
               to="/aluno/buscar"
               className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${location.pathname === "/aluno/buscar" ? "bg-amber-50 text-[#f19f17] font-semibold" : "hover:bg-gray-50 hover:text-gray-800"}`}
             >
-              🔍 Buscar
+              <i class="fas fa-search"></i>
+              Buscar
             </Link>
 
             <Link
               to="/aluno/ranking"
               className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${location.pathname === "/aluno/ranking" ? "bg-amber-50 text-[#f19f17] font-semibold" : "hover:bg-gray-50 hover:text-gray-800"}`}
             >
-              🥈 Ranking
+              <i class="fas fa-trophy"></i>
+              Ranking
             </Link>
 
             <Link
               to="/aluno/certificados"
               className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${location.pathname === "/aluno/certificados" ? "bg-amber-50 text-[#f19f17] font-semibold" : "hover:bg-gray-50 hover:text-gray-800"}`}
             >
-              📜 Certificados
+              <i class="fas fa-award"></i>
+              Certificados
             </Link>
 
             <Link
               to="/aluno/portfolio"
               className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${location.pathname === "/aluno/portfolio" ? "bg-amber-50 text-[#f19f17] font-semibold" : "hover:bg-gray-50 hover:text-gray-800"}`}
             >
-              💼 Portfólio
+              <i class="fas fa-suitcase"></i>
+              Portfólio
             </Link>
 
             <Link
               to="/aluno/projetos"
               className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${location.pathname === "/aluno/projetos" ? "bg-amber-50 text-[#f19f17] font-semibold" : "hover:bg-gray-50 hover:text-gray-800"}`}
             >
-              📂 Meus Projetos
+              <i class="far fa-folder"></i>
+              Meus Projetos
             </Link>
 
             <Link
               to="/aluno/submeter"
               className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${location.pathname === "/aluno/submeter" ? "bg-amber-50 text-[#f19f17] font-semibold" : "hover:bg-gray-50 hover:text-gray-800"}`}
             >
-              📤 Submeter
+              <i class="fas fa-upload"></i>
+              Submeter
             </Link>
           </nav>
 
-            {/* ÍCONES DA DIREITA: NOTIFICAÇÃO + AVATAR DE USUÁRIO */}
-          <div className="flex items-center gap-4">
-            <button className="relative p-2 text-gray-400 hover:text-gray-600 rounded-full transition-colors">
-              🔔{" "}
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+          {/* right topbar */}
+          <div className="flex items-center gap-5">
+            { /* bell */}
+            <button className="text-gray-400 hover:text-amber-500 transition-colors relative">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+              <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
             </button>
-
-            <div className="flex items-center gap-3 border-l border-gray-100 pl-4">
-              <Link to="/aluno/perfil" className="w-8 h-8 bg-[#f19f17] text-white rounded-full flex items-center justify-center font-bold shadow-sm hover:opacity-80 transition-opacity">
-                👤
-              </Link>
-              <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 transition-colors" title="Sair">
+            { /* user photo */}
+            <div className="flex items-center gap-3 pl-1">
+              <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-bold">  
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <path d="M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"></path>
+                </svg>
+              </div>
+              <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 ml-2" title="Sair">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
               </button>
             </div>
