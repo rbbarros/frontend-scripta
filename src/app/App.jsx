@@ -9,6 +9,7 @@ import CoordenacaoRoutes from "../features/coordenacao/routes";
 import AlunoRoutes from "../features/aluno/routes";
 import ProfessorRoutes from "../features/professor/routes";
 import EmpresaRoutes from "../features/empresa/routes";
+import ProtectedRoute from "../components/shared/ProtectedRoute";
 
 export default function App() {
   return (
@@ -21,10 +22,41 @@ export default function App() {
         <Route path="/cadastro/professor" element={<RegisterProfessor />} />
         <Route path="/cadastro/empresa" element={<RegisterEmpresa />} />
 
-        <Route path="/aluno/*" element={<AlunoRoutes />} />
-        <Route path="/professor/*" element={<ProfessorRoutes />} />
-        <Route path="/empresa/*" element={<EmpresaRoutes />} />
-        <Route path="/coordenacao/*" element={<CoordenacaoRoutes />} />
+        <Route
+          path="/aluno/*"
+          element={
+            <ProtectedRoute allowedProfiles={["aluno"]}>
+              <AlunoRoutes />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/professor/*"
+          element={
+            <ProtectedRoute allowedProfiles={["professor"]}>
+              <ProfessorRoutes />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/empresa/*"
+          element={
+            <ProtectedRoute allowedProfiles={["empresa"]}>
+              <EmpresaRoutes />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/coordenacao/*"
+          element={
+            <ProtectedRoute allowedProfiles={["coordenador"]}>
+              <CoordenacaoRoutes />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );
