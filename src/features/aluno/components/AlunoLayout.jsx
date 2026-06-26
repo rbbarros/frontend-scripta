@@ -1,14 +1,14 @@
 import React from "react";
 import { useNavigate, Link, useLocation, Outlet } from "react-router-dom";
+import { clearSession } from "../../../lib/authService";
 
 export default function AlunoLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleLogout = () => {
-    localStorage.removeItem("scripta_token");
-    localStorage.removeItem("scripta_user_type");
-    navigate("/");
+    clearSession();
+    navigate("/", { replace: true });
   };
 
   return (
@@ -32,7 +32,7 @@ export default function AlunoLayout() {
               to="/aluno"
               className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${location.pathname === "/aluno" || location.pathname === "/aluno/" ? "bg-amber-50 text-[#f19f17] font-semibold" : "hover:bg-gray-50 hover:text-gray-800"}`}
             >
-              <i class="fas fa-home"></i>
+              <i className="fas fa-home"></i>
               Início
             </Link>
 
@@ -40,7 +40,7 @@ export default function AlunoLayout() {
               to="/aluno/buscar"
               className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${location.pathname === "/aluno/buscar" ? "bg-amber-50 text-[#f19f17] font-semibold" : "hover:bg-gray-50 hover:text-gray-800"}`}
             >
-              <i class="fas fa-search"></i>
+              <i className="fas fa-search"></i>
               Buscar
             </Link>
 
@@ -48,7 +48,7 @@ export default function AlunoLayout() {
               to="/aluno/ranking"
               className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${location.pathname === "/aluno/ranking" ? "bg-amber-50 text-[#f19f17] font-semibold" : "hover:bg-gray-50 hover:text-gray-800"}`}
             >
-              <i class="fas fa-trophy"></i>
+              <i className="fas fa-trophy"></i>
               Ranking
             </Link>
 
@@ -56,7 +56,7 @@ export default function AlunoLayout() {
               to="/aluno/certificados"
               className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${location.pathname === "/aluno/certificados" ? "bg-amber-50 text-[#f19f17] font-semibold" : "hover:bg-gray-50 hover:text-gray-800"}`}
             >
-              <i class="fas fa-award"></i>
+              <i className="fas fa-award"></i>
               Certificados
             </Link>
 
@@ -64,7 +64,7 @@ export default function AlunoLayout() {
               to="/aluno/portfolio"
               className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${location.pathname === "/aluno/portfolio" ? "bg-amber-50 text-[#f19f17] font-semibold" : "hover:bg-gray-50 hover:text-gray-800"}`}
             >
-              <i class="fas fa-suitcase"></i>
+              <i className="fas fa-suitcase"></i>
               Portfólio
             </Link>
 
@@ -72,7 +72,7 @@ export default function AlunoLayout() {
               to="/aluno/projetos"
               className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${location.pathname === "/aluno/projetos" ? "bg-amber-50 text-[#f19f17] font-semibold" : "hover:bg-gray-50 hover:text-gray-800"}`}
             >
-              <i class="far fa-folder"></i>
+              <i className="far fa-folder"></i>
               Meus Projetos
             </Link>
 
@@ -80,28 +80,75 @@ export default function AlunoLayout() {
               to="/aluno/submeter"
               className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${location.pathname === "/aluno/submeter" ? "bg-amber-50 text-[#f19f17] font-semibold" : "hover:bg-gray-50 hover:text-gray-800"}`}
             >
-              <i class="fas fa-upload"></i>
+              <i className="fas fa-upload"></i>
               Submeter
             </Link>
           </nav>
 
           {/* right topbar */}
           <div className="flex items-center gap-5">
-            { /* bell */}
+            {/* bell */}
             <button className="text-gray-400 hover:text-amber-500 transition-colors relative">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
               <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
             </button>
-            { /* user photo */}
+            {/* user photo */}
             <div className="flex items-center gap-3 pl-1">
-              <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-bold">  
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <Link
+                to="/aluno/perfil"
+                title="Meu perfil"
+                aria-label="Abrir meu perfil"
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
+                  location.pathname === "/aluno/perfil"
+                    ? "bg-[#f19f17] text-white"
+                    : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                }`}
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                   <path d="M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"></path>
                 </svg>
-              </div>
-              <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 ml-2" title="Sair">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="text-gray-400 hover:text-red-500 ml-2"
+                title="Sair"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
               </button>
             </div>
           </div>

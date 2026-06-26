@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { getProjetos } from "../../../lib/projetosApi";
 import { getAlunoPerfil } from "../api/alunoApi";
-import { getProjetos } from "../../../lib/projetosApi";; // TODO: Extrair para projetosApi no futuro
 
 export function useAlunoDashboard() {
   const [perfil, setPerfil] = useState(null);
@@ -9,39 +9,54 @@ export function useAlunoDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchData() {
-      const token = localStorage.getItem("scripta_token");
-      if (!token) {
-        setErro("Não autenticado");
-        setLoading(false);
-        return;
-      }
+    let componenteAtivo = true;
+
+    async function carregarDados() {
+      setLoading(true);
+      setErro("");
 
       try {
-        const [perfilData, projetosData] = await Promise.allSettled([
+        const [perfilData, projetosData] = await Promise.all([
           getAlunoPerfil(),
-          getProjetos()
+          getProjetos(),
         ]);
 
-        if (perfilData.status === "fulfilled") {
-          setPerfil(perfilData.value);
-        } else {
-          setErro("Não foi possível carregar seu perfil.");
+        if (!componenteAtivo) {
+          return;
         }
 
-        if (projetosData.status === "fulfilled") {
-          setProjetos(Array.isArray(projetosData.value) ? projetosData.value : []);
-        }
+        setPerfil(perfilData);
 
+        setProjetos(Array.isArray(projetosData) ? projetosData : []);
       } catch (error) {
-        console.error("Erro no dashboard do aluno:", error);
+        if (!componenteAtivo) {
+          return;
+        }
+
+        setPerfil(null);
+        setProjetos([]);
+
+        setErro(
+          error.message || "Não foi possível carregar os dados do aluno.",
+        );
       } finally {
-        setLoading(false);
+        if (componenteAtivo) {
+          setLoading(false);
+        }
       }
     }
 
-    fetchData();
+    carregarDados();
+
+    return () => {
+      componenteAtivo = false;
+    };
   }, []);
 
-  return { perfil, projetos, erro, loading };
+  return {
+    perfil,
+    projetos,
+    erro,
+    loading,
+  };
 }
