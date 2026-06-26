@@ -1,44 +1,71 @@
-import { useState, useEffect } from "react";
-import { getAlunoPerfil } from "../api/alunoApi";
-import { getProjetos } from "../../../lib/projetosApi";; // TODO: Mover futuramente
+import { useCallback, useEffect, useState } from "react";
+
+import { getProjetos, updateProjetoStatus } from "../../../lib/projetosApi";
 
 export function useAlunoProjetos() {
-  const [projetos, setProjetos] = useState([]);
   const [meusProjetos, setMeusProjetos] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [perfilRes, projetosRes] = await Promise.allSettled([
-          getAlunoPerfil(),
-          getProjetos()
-        ]);
+  const [erro, setErro] = useState("");
 
-        let perfilId = null;
-        if (perfilRes.status === "fulfilled" && perfilRes.value) {
-          perfilId = perfilRes.value.id;
-        }
+  const [submetendoId, setSubmetendoId] = useState(null);
 
-        let allProjetos = [];
-        if (projetosRes.status === "fulfilled" && Array.isArray(projetosRes.value)) {
-          allProjetos = projetosRes.value;
-          setProjetos(allProjetos);
-        }
+  const carregarProjetos = useCallback(async () => {
+    setLoading(true);
+    setErro("");
 
-        if (perfilId) {
-          setMeusProjetos(allProjetos.filter(p => p.aluno_responsavel_id === perfilId));
-        }
+    try {
+      const data = await getProjetos();
 
-      } catch (error) {
-        console.error("Erro ao carregar projetos do aluno:", error);
-      } finally {
-        setLoading(false);
-      }
+      setMeusProjetos(Array.isArray(data) ? data : []);
+    } catch (error) {
+      setMeusProjetos([]);
+
+      setErro(error.message || "Não foi possível carregar seus projetos.");
+    } finally {
+      setLoading(false);
     }
-
-    fetchData();
   }, []);
 
-  return { projetos, meusProjetos, loading };
+  useEffect(() => {
+    carregarProjetos();
+  }, [carregarProjetos]);
+
+  async function submeterProjeto(projetoId) {
+    setSubmetendoId(projetoId);
+    setErro("");
+
+    try {
+      await updateProjetoStatus(projetoId, "submetido");
+
+      setMeusProjetos((projetosAtuais) =>
+        projetosAtuais.map((projeto) =>
+          projeto.id === projetoId
+            ? {
+                ...projeto,
+                status: "submetido",
+              }
+            : projeto,
+        ),
+      );
+
+      return true;
+    } catch (error) {
+      setErro(error.message || "Não foi possível submeter o projeto.");
+
+      return false;
+    } finally {
+      setSubmetendoId(null);
+    }
+  }
+
+  return {
+    meusProjetos,
+    loading,
+    erro,
+    submetendoId,
+    submeterProjeto,
+    refetch: carregarProjetos,
+  };
 }

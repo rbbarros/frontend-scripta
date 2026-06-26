@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { getAlunoPerfil } from "../api/alunoApi";
-import { createProjeto } from "../../../lib/projetosApi";;
-import { getProfessores } from "../../professor/api/professorApi";
+import { createProjeto } from "../../../lib/projetosApi";
+import { getProfessoresOrientadores } from "../../professor/api/professorApi";
 
 export function useAlunoSubmeter() {
   const [perfil, setPerfil] = useState(null);
@@ -18,7 +18,7 @@ export function useAlunoSubmeter() {
       }
 
       try {
-        const profs = await getProfessores();
+        const profs = await getProfessoresOrientadores();
         setProfessores(profs);
       } catch (e) {
         console.error(e);
@@ -29,14 +29,10 @@ export function useAlunoSubmeter() {
 
   const submitProjeto = async (formData) => {
     if (!perfil?.id) throw new Error("Perfil não carregado.");
-    
+
     setLoading(true);
     try {
-      const payload = {
-        ...formData,
-        aluno_responsavel_id: perfil.id,
-      };
-      await createProjeto(payload);
+      return createProjeto(formData);
     } finally {
       setLoading(false);
     }

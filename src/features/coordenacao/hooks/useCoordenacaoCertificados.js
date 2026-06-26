@@ -1,20 +1,26 @@
-import { useState, useEffect, useCallback } from 'react';
-import { apiRequest } from '../../../lib/api';
+import { useCallback, useEffect, useState } from "react";
+
+import { getTodosCertificados } from "../../../lib/certificadosApi";
 
 export function useCoordenacaoCertificados() {
   const [certificados, setCertificados] = useState([]);
+
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+
+  const [error, setError] = useState("");
 
   const fetchCertificados = useCallback(async () => {
+    setLoading(true);
+    setError("");
+
     try {
-      setLoading(true);
-      const data = await apiRequest('/certificados/emitidos');
-      setCertificados(Array.isArray(data) ? data : (data?.data || []));
-      setError(null);
+      const data = await getTodosCertificados();
+
+      setCertificados(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error(err);
-      setError('Erro ao carregar certificados.');
+      setCertificados([]);
+
+      setError(err.message || "Erro ao carregar certificados.");
     } finally {
       setLoading(false);
     }
@@ -24,5 +30,10 @@ export function useCoordenacaoCertificados() {
     fetchCertificados();
   }, [fetchCertificados]);
 
-  return { certificados, loading, error, refetch: fetchCertificados };
+  return {
+    certificados,
+    loading,
+    error,
+    refetch: fetchCertificados,
+  };
 }

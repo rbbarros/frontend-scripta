@@ -16,3 +16,7 @@ export async function updateProfessorPerfil(data) {
 export async function getProfessores() {
   return apiRequest("/professores/");
 }
+
+export async function getProfessoresOrientadores() {
+  return apiRequest("/professores/opcoes-orientadores");
+}
