@@ -5,10 +5,8 @@ import { registerEmpresa } from "../../../lib/authService";
 export default function RegisterEmpresa() {
   const navigate = useNavigate();
   const [nomeEmpresa, setNomeEmpresa] = useState("");
-  const [nomeFantasia, setNomeFantasia] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [email, setEmail] = useState("");
-  const [site, setSite] = useState("");
   const [setor, setSetor] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
@@ -25,15 +23,15 @@ export default function RegisterEmpresa() {
     try {
       await registerEmpresa({
         nome_empresa: nomeEmpresa,
-        nome_fantasia: nomeFantasia,
         cnpj,
         email_contato: email,
-        site,
         setor,
         senha,
         confirmar_senha: confirmarSenha,
       });
-      setSucesso("Conta de empresa criada com sucesso. Faça login para continuar.");
+      setSucesso(
+        "Conta de empresa criada com sucesso. Faça login para continuar.",
+      );
       setTimeout(() => navigate("/"), 1200);
     } catch (err) {
       setErro(err.message || "Não foi possível cadastrar. Verifique os dados.");
@@ -91,7 +89,9 @@ export default function RegisterEmpresa() {
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Razão social</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Razão social
+              </label>
               <input
                 type="text"
                 value={nomeEmpresa}
@@ -102,18 +102,9 @@ export default function RegisterEmpresa() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nome fantasia</label>
-              <input
-                type="text"
-                value={nomeFantasia}
-                onChange={(e) => setNomeFantasia(e.target.value)}
-                placeholder="Nome fantasia"
-                className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#f19f17]"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">CNPJ</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                CNPJ
+              </label>
               <input
                 type="text"
                 value={cnpj}
@@ -124,28 +115,23 @@ export default function RegisterEmpresa() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">E-mail corporativo</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                E-mail corporativo
+              </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="contato@empresa.com.br"
+                autoComplete="email"
                 className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#f19f17]"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Site (opcional)</label>
-              <input
-                type="url"
-                value={site}
-                onChange={(e) => setSite(e.target.value)}
-                placeholder="https://www.empresa.com.br"
-                className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#f19f17]"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Área de atuação</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Área de atuação
+              </label>
               <input
                 type="text"
                 value={setor}
@@ -156,23 +142,29 @@ export default function RegisterEmpresa() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Senha
+              </label>
               <input
                 type="password"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 placeholder="Crie uma senha segura"
+                autoComplete="new-password"
                 className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#f19f17]"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar senha</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Confirmar senha
+              </label>
               <input
                 type="password"
                 value={confirmarSenha}
                 onChange={(e) => setConfirmarSenha(e.target.value)}
                 placeholder="Digite a senha novamente"
+                autoComplete="new-password"
                 className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#f19f17]"
                 required
               />

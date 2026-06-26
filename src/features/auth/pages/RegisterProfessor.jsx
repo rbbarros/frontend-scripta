@@ -17,17 +17,37 @@ export default function RegisterProfessor() {
     e.preventDefault();
     setErro("");
     setSucesso("");
+
+    const emailNormalizado = email.trim().toLowerCase();
+
+    if (!emailNormalizado.endsWith("@edu.pe.senac.br")) {
+      setErro("Utilize o e-mail institucional do Senac (@edu.pe.senac.br).");
+      return;
+    }
+
+    if (senha.length < 6) {
+      setErro("A senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
+
+    if (senha !== confirmarSenha) {
+      setErro("As senhas não coincidem.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       await registerProfessor({
         nome,
-        email,
+        email: emailNormalizado,
         area_atuacao: areaAtuacao,
         senha,
         confirmar_senha: confirmarSenha,
       });
-      setSucesso("Conta de professor criada com sucesso. Faça login para continuar.");
+      setSucesso(
+        "Conta de professor criada com sucesso. Faça login para continuar.",
+      );
       setTimeout(() => navigate("/"), 1200);
     } catch (err) {
       setErro(err.message || "Não foi possível cadastrar. Verifique os dados.");
@@ -85,7 +105,9 @@ export default function RegisterProfessor() {
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nome completo</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nome completo
+              </label>
               <input
                 type="text"
                 value={nome}
@@ -96,18 +118,23 @@ export default function RegisterProfessor() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">E-mail institucional</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                E-mail institucional
+              </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="professor@senac.edu.br"
+                placeholder="professor@edu.pe.senac.br"
+                autoComplete="email"
                 className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#f19f17]"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Área de atuação</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Área de atuação
+              </label>
               <input
                 type="text"
                 value={areaAtuacao}
@@ -117,23 +144,31 @@ export default function RegisterProfessor() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Senha
+              </label>
               <input
                 type="password"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 placeholder="Crie uma senha segura"
+                autoComplete="new-password"
+                minLength={6}
                 className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#f19f17]"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar senha</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Confirmar senha
+              </label>
               <input
                 type="password"
                 value={confirmarSenha}
                 onChange={(e) => setConfirmarSenha(e.target.value)}
                 placeholder="Digite a senha novamente"
+                autoComplete="new-password"
+                minLength={6}
                 className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#f19f17]"
                 required
               />

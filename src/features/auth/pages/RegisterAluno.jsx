@@ -17,17 +17,37 @@ export default function RegisterAluno() {
     e.preventDefault();
     setErro("");
     setSucesso("");
+
+    const emailNormalizado = email.trim().toLowerCase();
+
+    if (!emailNormalizado.endsWith("@edu.pe.senac.br")) {
+      setErro("Utilize o e-mail institucional do Senac (@edu.pe.senac.br).");
+      return;
+    }
+
+    if (senha.length < 6) {
+      setErro("A senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
+
+    if (senha !== confirmarSenha) {
+      setErro("As senhas não coincidem.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       await registerAluno({
         nome,
-        email,
+        email: emailNormalizado,
         curso,
         senha,
         confirmar_senha: confirmarSenha,
       });
-      setSucesso("Conta de aluno criada com sucesso. Faça login para continuar.");
+      setSucesso(
+        "Conta de aluno criada com sucesso. Faça login para continuar.",
+      );
       setTimeout(() => navigate("/"), 1200);
     } catch (err) {
       setErro(err.message || "Não foi possível cadastrar. Verifique os dados.");
@@ -47,7 +67,8 @@ export default function RegisterAluno() {
             Bem-vindo ao Scripta
           </h1>
           <p className="text-lg text-gray-500 leading-relaxed text-justify">
-            Acesse a plataforma para submeter e gerenciar seus projetos integradores.
+            Acesse a plataforma para submeter e gerenciar seus projetos
+            integradores.
           </p>
         </div>
       </div>
@@ -65,7 +86,9 @@ export default function RegisterAluno() {
             <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-2">
               Criar conta como Aluno
             </h2>
-            <p className="text-sm text-gray-400">Preencha os dados para começar</p>
+            <p className="text-sm text-gray-400">
+              Preencha os dados para começar
+            </p>
           </div>
 
           {erro && (
@@ -82,7 +105,9 @@ export default function RegisterAluno() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nome completo</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nome completo
+              </label>
               <input
                 type="text"
                 value={nome}
@@ -93,18 +118,23 @@ export default function RegisterAluno() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">E-mail institucional</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                E-mail institucional
+              </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu.email@senac.edu.br"
+                placeholder="seu.email@edu.pe.senac.br"
+                autoComplete="email"
                 className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#f19f17]"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Curso</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Curso
+              </label>
               <input
                 type="text"
                 value={curso}
@@ -115,23 +145,31 @@ export default function RegisterAluno() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Senha
+              </label>
               <input
                 type="password"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 placeholder="Crie uma senha segura"
+                autoComplete="new-password"
+                minLength={6}
                 className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#f19f17]"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar senha</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Confirmar senha
+              </label>
               <input
                 type="password"
                 value={confirmarSenha}
                 onChange={(e) => setConfirmarSenha(e.target.value)}
                 placeholder="Digite a senha novamente"
+                autoComplete="new-password"
+                minLength={6}
                 className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#f19f17]"
                 required
               />
@@ -148,7 +186,7 @@ export default function RegisterAluno() {
 
           <div className="mt-8 text-center">
             <p className="text-sm text-gray-500">
-              Já tem uma conta? {" "}
+              Já tem uma conta?{" "}
               <button
                 onClick={() => navigate("/")}
                 className="text-[#f19f17] hover:underline font-semibold"
