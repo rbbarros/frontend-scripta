@@ -1,96 +1,337 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+
+import { FileText, Search } from "lucide-react";
+
 import { Link } from "react-router-dom";
+
 import { useProfessorProjetos } from "../hooks/useProfessorProjetos";
 
+const STATUS_PROJETO = {
+  submetido: {
+    label: "Submetido",
+    classes: "bg-blue-50 text-blue-700 border-blue-100",
+  },
+  em_avaliacao: {
+    label: "Em avaliação",
+    classes: "bg-purple-50 text-purple-700 border-purple-100",
+  },
+  aprovado: {
+    label: "Aprovado",
+    classes: "bg-emerald-50 text-emerald-700 border-emerald-100",
+  },
+  reprovado: {
+    label: "Reprovado",
+    classes: "bg-red-50 text-red-700 border-red-100",
+  },
+};
+
+const STATUS_AVALIACAO = {
+  pendente: {
+    label: "Pendente",
+    classes: "bg-amber-50 text-amber-700 border-amber-100",
+  },
+  avaliado: {
+    label: "Avaliado",
+    classes: "bg-emerald-50 text-emerald-700 border-emerald-100",
+  },
+  encerrado: {
+    label: "Encerrado",
+    classes: "bg-gray-100 text-gray-600 border-gray-200",
+  },
+};
+
 export default function Projetos() {
-  const { projetos, loading } = useProfessorProjetos();
+  const { projetos, loading, erro } = useProfessorProjetos();
+
   const [busca, setBusca] = useState("");
 
-  const mockProjetos = [
-    { id: 1, titulo: "Sistema de IA para Diagnóstico Médico", curso: "Engenharia de Software - ESW-2A - 1º/2025 - Matutino", integrantes: 4, status: "Pendente", color: "bg-amber-50 text-amber-700" },
-    { id: 2, titulo: "Marketplace Sustentável", curso: "Sistemas de Informação - SI-3B - 1º/2025 - Noturno", integrantes: 3, status: "Pendente", color: "bg-amber-50 text-amber-700" },
-    { id: 3, titulo: "App de Realidade Aumentada", curso: "Design Digital - DD-1A - 1º/2025 - Matutino", integrantes: 5, status: "Avaliado", color: "bg-emerald-50 text-emerald-700" },
-    { id: 4, titulo: "Plataforma de Blockchain para Certificados", curso: "Ciência da Computação - CC-4A - 2º/2024 - Vespertino", integrantes: 3, status: "Avaliado", color: "bg-emerald-50 text-emerald-700" },
-  ];
+  const [curso, setCurso] = useState("");
 
-  const exibidos = projetos.length > 0 ? projetos : mockProjetos;
+  const [turma, setTurma] = useState("");
+
+  const [semestre, setSemestre] = useState("");
+
+  const [statusAvaliacao, setStatusAvaliacao] = useState("");
+
+  const cursos = useMemo(
+    () =>
+      [
+        ...new Set(projetos.map((projeto) => projeto.curso).filter(Boolean)),
+      ].sort(),
+    [projetos],
+  );
+
+  const turmas = useMemo(
+    () =>
+      [
+        ...new Set(projetos.map((projeto) => projeto.turma).filter(Boolean)),
+      ].sort(),
+    [projetos],
+  );
+
+  const semestres = useMemo(
+    () =>
+      [
+        ...new Set(projetos.map((projeto) => projeto.semestre).filter(Boolean)),
+      ].sort(),
+    [projetos],
+  );
+
+  const projetosFiltrados = useMemo(() => {
+    const termo = busca.trim().toLowerCase();
+
+    return projetos.filter((projeto) => {
+      const correspondeBusca =
+        !termo ||
+        projeto.titulo?.toLowerCase().includes(termo) ||
+        projeto.aluno_responsavel?.toLowerCase().includes(termo) ||
+        projeto.professor_orientador?.toLowerCase().includes(termo) ||
+        projeto.area_conhecimento?.toLowerCase().includes(termo);
+
+      const correspondeCurso = !curso || projeto.curso === curso;
+
+      const correspondeTurma = !turma || projeto.turma === turma;
+
+      const correspondeSemestre = !semestre || projeto.semestre === semestre;
+
+      const correspondeAvaliacao =
+        !statusAvaliacao || projeto.status_avaliacao === statusAvaliacao;
+
+      return (
+        correspondeBusca &&
+        correspondeCurso &&
+        correspondeTurma &&
+        correspondeSemestre &&
+        correspondeAvaliacao
+      );
+    });
+  }, [projetos, busca, curso, turma, semestre, statusAvaliacao]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-amber-500" />
+      </div>
+    );
+  }
 
   return (
-    <div className="animate-in fade-in zoom-in-95 duration-200">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Projetos</h1>
-        <p className="text-sm text-gray-500 mt-1">Gerencie e avalie os projetos integradores</p>
-      </div>
+    <div className="pb-12">
+      <header className="mb-8">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+          Projetos
+        </h1>
 
-      <div className="bg-white p-6 rounded-3xl border border-gray-100 mb-8 shadow-sm">
-        <h3 className="flex items-center gap-2 font-bold text-gray-800 text-sm mb-4">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#f19f17]"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-          Filtros
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+        <p className="mt-1 text-sm text-gray-500">
+          Consulte os projetos submetidos e acompanhe suas avaliações.
+        </p>
+      </header>
+
+      {erro && (
+        <div className="mb-6 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-medium text-red-600">
+          {erro}
+        </div>
+      )}
+
+      <section className="mb-8 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+        <h2 className="mb-5 text-sm font-bold text-gray-800">Filtros</h2>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1">Curso</label>
-            <select className="w-full px-3 py-2.5 bg-white border border-gray-200 focus:border-[#f19f17] rounded-xl text-sm text-gray-600 outline-none">
-              <option>Todos</option>
+            <label
+              htmlFor="curso"
+              className="mb-1 block text-xs font-bold text-gray-700"
+            >
+              Curso
+            </label>
+
+            <select
+              id="curso"
+              value={curso}
+              onChange={(event) => setCurso(event.target.value)}
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-600 outline-none focus:border-[#f19f17]"
+            >
+              <option value="">Todos</option>
+
+              {cursos.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
             </select>
           </div>
+
           <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1">Turma</label>
-            <select className="w-full px-3 py-2.5 bg-white border border-gray-200 focus:border-[#f19f17] rounded-xl text-sm text-gray-600 outline-none">
-              <option>Todos</option>
+            <label
+              htmlFor="turma"
+              className="mb-1 block text-xs font-bold text-gray-700"
+            >
+              Turma
+            </label>
+
+            <select
+              id="turma"
+              value={turma}
+              onChange={(event) => setTurma(event.target.value)}
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-600 outline-none focus:border-[#f19f17]"
+            >
+              <option value="">Todas</option>
+
+              {turmas.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
             </select>
           </div>
+
           <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1">Semestre</label>
-            <select className="w-full px-3 py-2.5 bg-white border border-gray-200 focus:border-[#f19f17] rounded-xl text-sm text-gray-600 outline-none">
-              <option>Todos</option>
+            <label
+              htmlFor="semestre"
+              className="mb-1 block text-xs font-bold text-gray-700"
+            >
+              Semestre
+            </label>
+
+            <select
+              id="semestre"
+              value={semestre}
+              onChange={(event) => setSemestre(event.target.value)}
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-600 outline-none focus:border-[#f19f17]"
+            >
+              <option value="">Todos</option>
+
+              {semestres.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
             </select>
           </div>
+
           <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1">Período</label>
-            <select className="w-full px-3 py-2.5 bg-white border border-gray-200 focus:border-[#f19f17] rounded-xl text-sm text-gray-600 outline-none">
-              <option>Todos</option>
+            <label
+              htmlFor="status-avaliacao"
+              className="mb-1 block text-xs font-bold text-gray-700"
+            >
+              Avaliação
+            </label>
+
+            <select
+              id="status-avaliacao"
+              value={statusAvaliacao}
+              onChange={(event) => setStatusAvaliacao(event.target.value)}
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-600 outline-none focus:border-[#f19f17]"
+            >
+              <option value="">Todas</option>
+
+              <option value="pendente">Pendentes</option>
+
+              <option value="avaliado">Avaliados</option>
+
+              <option value="encerrado">Encerrados</option>
             </select>
           </div>
         </div>
 
-        <div className="relative">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input type="text" placeholder="Buscar por título..." value={busca} onChange={e => setBusca(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 focus:border-[#f19f17] rounded-xl text-sm outline-none transition-colors" />
+        <div className="relative mt-4">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            size={17}
+          />
+
+          <input
+            type="search"
+            placeholder="Buscar por título, aluno, professor ou área"
+            value={busca}
+            onChange={(event) => setBusca(event.target.value)}
+            className="w-full rounded-xl border border-gray-200 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-[#f19f17]"
+          />
         </div>
+      </section>
+
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-bold text-gray-800">Projetos</h2>
+
+        <span className="text-sm font-semibold text-gray-400">
+          {projetosFiltrados.length} encontrado(s)
+        </span>
       </div>
 
-      <div>
-        <h2 className="text-lg font-bold text-gray-800 mb-4">Projetos ({exibidos.length})</h2>
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-          {exibidos.map((p, i) => {
-            const isLast = i === exibidos.length - 1;
+      {projetosFiltrados.length > 0 ? (
+        <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
+          {projetosFiltrados.map((projeto, index) => {
+            const statusProjeto = STATUS_PROJETO[projeto.status] || {
+              label: projeto.status,
+              classes: "bg-gray-100 text-gray-600 border-gray-200",
+            };
+
+            const avaliacao = STATUS_AVALIACAO[projeto.status_avaliacao];
+
             return (
-              <Link key={p.id || i} to={`/professor/projetos/${p.id || 1}`} className={`flex flex-col md:flex-row md:items-center justify-between p-6 hover:bg-gray-50 transition-colors ${!isLast ? 'border-b border-gray-50' : ''}`}>
-                <div className="flex items-start gap-4 mb-3 md:mb-0">
-                  <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-[#f19f17] shrink-0">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              <Link
+                key={projeto.id}
+                to={`/professor/projetos/${projeto.id}`}
+                className={`flex flex-col justify-between gap-5 p-6 transition-colors hover:bg-gray-50 md:flex-row md:items-center ${
+                  index < projetosFiltrados.length - 1
+                    ? "border-b border-gray-100"
+                    : ""
+                }`}
+              >
+                <div className="flex min-w-0 items-start gap-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-[#f19f17]">
+                    <FileText size={21} />
                   </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 text-sm mb-1">{p.titulo}</h3>
-                    <p className="text-xs text-gray-500">{p.curso}</p>
+
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-gray-900">
+                      {projeto.titulo}
+                    </h3>
+
+                    <p className="mt-1 text-xs text-gray-500">
+                      {projeto.curso} • {projeto.turma} • {projeto.semestre}
+                    </p>
+
+                    <p className="mt-2 text-xs text-gray-400">
+                      Responsável: {projeto.aluno_responsavel}
+                    </p>
+
+                    <p className="mt-1 text-xs text-gray-400">
+                      Área: {projeto.area_conhecimento}
+                    </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-1 text-xs text-gray-500 font-medium bg-gray-100 px-2 py-1 rounded-lg">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                    {p.integrantes || 4}
+
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                  <span
+                    className={`rounded-lg border px-2.5 py-1 text-[10px] font-bold ${statusProjeto.classes}`}
+                  >
+                    {statusProjeto.label}
                   </span>
-                  <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold ${p.color || "bg-amber-50 text-amber-700"}`}>
-                    {p.status || "Pendente"}
+
+                  <span
+                    className={`rounded-lg border px-2.5 py-1 text-[10px] font-bold ${avaliacao.classes}`}
+                  >
+                    {avaliacao.label}
                   </span>
                 </div>
               </Link>
             );
           })}
         </div>
-      </div>
+      ) : (
+        <div className="rounded-3xl border border-dashed border-gray-200 bg-white p-12 text-center">
+          <FileText size={40} className="mx-auto text-gray-300" />
+
+          <h2 className="mt-4 text-lg font-bold text-gray-700">
+            Nenhum projeto encontrado
+          </h2>
+
+          <p className="mt-2 text-sm text-gray-500">
+            Não existem projetos compatíveis com os filtros selecionados.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

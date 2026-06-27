@@ -1,26 +1,43 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
+
+import { getAvaliacoes } from "../../../lib/avaliacoesApi";
+import { getProjetos } from "../../../lib/projetosApi";
+
 import { getProfessorPerfil } from "../api/professorApi";
-import { getProjetos } from "../../../lib/projetosApi";; // Mantemos authService por enquanto
 
 export function useProfessorDashboard() {
   const [perfil, setPerfil] = useState(null);
+
   const [projetos, setProjetos] = useState([]);
+
+  const [avaliacoes, setAvaliacoes] = useState([]);
+
   const [loading, setLoading] = useState(true);
+
+  const [erro, setErro] = useState("");
 
   const fetchDados = useCallback(async () => {
     setLoading(true);
-    try {
-      const p = await getProfessorPerfil();
-      setPerfil(p);
-    } catch (e) {
-      console.error(e);
-    }
+    setErro("");
 
     try {
-      const data = await getProjetos();
-      setProjetos(Array.isArray(data) ? data : []);
-    } catch (e) {
+      const [perfilData, projetosData, avaliacoesData] = await Promise.all([
+        getProfessorPerfil(),
+        getProjetos(),
+        getAvaliacoes(),
+      ]);
+
+      setPerfil(perfilData);
+
+      setProjetos(Array.isArray(projetosData) ? projetosData : []);
+
+      setAvaliacoes(Array.isArray(avaliacoesData) ? avaliacoesData : []);
+    } catch (error) {
+      setPerfil(null);
       setProjetos([]);
+      setAvaliacoes([]);
+
+      setErro(error.message || "Não foi possível carregar o dashboard.");
     } finally {
       setLoading(false);
     }
@@ -30,5 +47,12 @@ export function useProfessorDashboard() {
     fetchDados();
   }, [fetchDados]);
 
-  return { perfil, projetos, loading };
+  return {
+    perfil,
+    projetos,
+    avaliacoes,
+    loading,
+    erro,
+    recarregar: fetchDados,
+  };
 }

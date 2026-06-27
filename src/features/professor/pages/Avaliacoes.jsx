@@ -1,100 +1,305 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
+
+import { ArrowRight, FileText, Search, Star } from "lucide-react";
+
+import { Link } from "react-router-dom";
+
 import { useProfessorAvaliacoes } from "../hooks/useProfessorAvaliacoes";
 
+const CONCEITO_CLASSES = {
+  Excelente: "border-emerald-100 bg-emerald-50 text-emerald-700",
+
+  Ótimo: "border-blue-100 bg-blue-50 text-blue-700",
+
+  Bom: "border-amber-100 bg-amber-50 text-amber-700",
+
+  "Ainda não suficiente": "border-orange-100 bg-orange-50 text-orange-700",
+
+  Insuficiente: "border-red-100 bg-red-50 text-red-700",
+};
+
+function formatarData(data) {
+  if (!data) {
+    return "Data não disponível";
+  }
+
+  const dataFormatada = new Date(data);
+
+  if (Number.isNaN(dataFormatada.getTime())) {
+    return "Data não disponível";
+  }
+
+  return dataFormatada.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+function formatarNota(nota) {
+  const valor = Number(nota);
+
+  if (Number.isNaN(valor)) {
+    return "—";
+  }
+
+  return valor.toFixed(2);
+}
+
 export default function Avaliacoes() {
-  const { projetos, perfil, loading } = useProfessorAvaliacoes();
+  const { perfil, avaliacoes, loading, erro } = useProfessorAvaliacoes();
 
-  const profName = perfil?.nome || "Ana Silva";
+  const [busca, setBusca] = useState("");
 
-  const mockAvaliacoes = [
-    {
-      titulo: "Plataforma de Blockchain para Certificados",
-      curso: "Ciência da Computação - CC-4A",
-      data: "28/05/2025",
-      badge: "Excelente",
-      badgeColor: "bg-emerald-50 text-emerald-600",
-      inovacao: 97,
-      qualidade: 95,
-      aplicabilidade: 96,
-      clareza: 95,
-      media: 96,
-      parecer: "Projeto de alta qualidade técnica, com inovação real e aplicabilidade comprovada. A documentação é clara e completa."
-    },
-    {
-      titulo: "App de Realidade Aumentada Educacional",
-      curso: "Design Digital - DD-1A",
-      data: "20/05/2025",
-      badge: "Ótimo",
-      badgeColor: "bg-blue-50 text-blue-600",
-      inovacao: 92,
-      qualidade: 85,
-      aplicabilidade: 88,
-      clareza: 87,
-      media: 88,
-      parecer: "Ótima aplicação das tecnologias emergentes no contexto educacional. Recomendo aprimorar a usabilidade."
-    }
-  ];
+  const [conceito, setConceito] = useState("");
+
+  const conceitosDisponiveis = useMemo(
+    () =>
+      [
+        ...new Set(
+          avaliacoes.map((avaliacao) => avaliacao.conceito).filter(Boolean),
+        ),
+      ].sort(),
+    [avaliacoes],
+  );
+
+  const avaliacoesFiltradas = useMemo(() => {
+    const termo = busca.trim().toLowerCase();
+
+    return avaliacoes.filter((avaliacao) => {
+      const correspondeBusca =
+        !termo ||
+        avaliacao.projeto_titulo?.toLowerCase().includes(termo) ||
+        avaliacao.professor_nome?.toLowerCase().includes(termo) ||
+        avaliacao.parecer_descritivo?.toLowerCase().includes(termo);
+
+      const correspondeConceito = !conceito || avaliacao.conceito === conceito;
+
+      return correspondeBusca && correspondeConceito;
+    });
+  }, [avaliacoes, busca, conceito]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-amber-500" />
+      </div>
+    );
+  }
 
   return (
-    <div className="animate-in fade-in zoom-in-95 duration-200">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Histórico de Avaliações</h1>
-        <p className="text-sm text-gray-500 mt-1">Todas as avaliações realizadas por você na plataforma</p>
+    <div className="pb-12">
+      <header className="mb-8">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+          Histórico de avaliações
+        </h1>
+
+        <p className="mt-1 text-sm text-gray-500">
+          Consulte todas as avaliações realizadas por você na plataforma.
+        </p>
+      </header>
+
+      {erro && (
+        <div className="mb-6 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-medium text-red-600">
+          {erro}
+        </div>
+      )}
+
+      <section className="mb-8 grid grid-cols-1 gap-4 rounded-3xl border border-gray-100 bg-white p-5 shadow-sm md:grid-cols-[1fr_280px]">
+        <div className="relative">
+          <Search
+            size={18}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+
+          <input
+            type="search"
+            value={busca}
+            onChange={(event) => setBusca(event.target.value)}
+            placeholder="Buscar por projeto ou parecer"
+            className="w-full rounded-xl border border-gray-200 py-3 pl-11 pr-4 text-sm outline-none focus:border-[#f19f17]"
+          />
+        </div>
+
+        <select
+          value={conceito}
+          onChange={(event) => setConceito(event.target.value)}
+          className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#f19f17]"
+        >
+          <option value="">Todos os conceitos</option>
+
+          {conceitosDisponiveis.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </select>
+      </section>
+
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-bold text-gray-800">
+          Avaliações realizadas
+        </h2>
+
+        <span className="text-sm font-semibold text-gray-400">
+          {avaliacoesFiltradas.length} encontrada(s)
+        </span>
       </div>
 
-      <div className="space-y-6">
-        {mockAvaliacoes.map((a, i) => (
-          <article key={i} className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-8">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-orange-400 shrink-0">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+      {avaliacoesFiltradas.length > 0 ? (
+        <div className="space-y-6">
+          {avaliacoesFiltradas.map((avaliacao) => {
+            const classes =
+              CONCEITO_CLASSES[avaliacao.conceito] ||
+              "border-gray-200 bg-gray-100 text-gray-600";
+
+            const possuiDetalhes =
+              avaliacao.nota_inovacao !== undefined &&
+              avaliacao.nota_tecnica !== undefined &&
+              avaliacao.nota_aplicabilidade !== undefined &&
+              avaliacao.nota_clareza !== undefined;
+
+            return (
+              <article
+                key={avaliacao.id}
+                className="rounded-3xl border border-gray-100 bg-white p-7 shadow-sm"
+              >
+                <div className="flex flex-col justify-between gap-5 border-b border-gray-100 pb-6 md:flex-row md:items-start">
+                  <div className="flex min-w-0 items-start gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-500">
+                      <Star size={23} />
+                    </div>
+
+                    <div className="min-w-0">
+                      <h3 className="text-lg font-bold text-gray-900">
+                        {avaliacao.projeto_titulo}
+                      </h3>
+
+                      <p className="mt-1 text-xs text-gray-500">
+                        Avaliado por{" "}
+                        {avaliacao.professor_nome ||
+                          perfil?.nome ||
+                          "Professor autenticado"}
+                      </p>
+
+                      <p className="mt-1 text-xs text-gray-400">
+                        {formatarData(avaliacao.data_avaliacao)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-4">
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-gray-900">
+                        {formatarNota(avaliacao.media_geral)}
+                      </p>
+
+                      <p className="text-xs text-gray-400">Média geral</p>
+                    </div>
+
+                    <span
+                      className={`rounded-lg border px-3 py-1.5 text-xs font-bold ${classes}`}
+                    >
+                      {avaliacao.conceito}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 text-lg leading-snug mb-1">{a.titulo}</h3>
-                  <p className="text-xs text-gray-500">{a.curso}</p>
+
+                {possuiDetalhes && (
+                  <div className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-4">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                        Inovação
+                      </p>
+
+                      <p className="mt-1 text-lg font-bold text-gray-900">
+                        {formatarNota(avaliacao.nota_inovacao)}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                        Qualidade técnica
+                      </p>
+
+                      <p className="mt-1 text-lg font-bold text-gray-900">
+                        {formatarNota(avaliacao.nota_tecnica)}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                        Aplicabilidade
+                      </p>
+
+                      <p className="mt-1 text-lg font-bold text-gray-900">
+                        {formatarNota(avaliacao.nota_aplicabilidade)}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                        Clareza
+                      </p>
+
+                      <p className="mt-1 text-lg font-bold text-gray-900">
+                        {formatarNota(avaliacao.nota_clareza)}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-6 h-2.5 overflow-hidden rounded-full bg-gray-100">
+                  <div
+                    className="h-full rounded-full bg-[#f19f17]"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        Math.max(0, Number(avaliacao.media_geral) || 0),
+                      )}%`,
+                    }}
+                  />
                 </div>
-              </div>
-              <div className="flex items-center gap-3 md:ml-auto">
-                <span className="text-xs text-gray-400 font-medium">{a.data}</span>
-                <span className={`px-3 py-1.5 rounded-lg text-xs font-bold ${a.badgeColor}`}>{a.badge}</span>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
-              <div>
-                <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Inovação</p>
-                <p className="text-lg font-bold text-gray-900">{a.inovacao}%</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Qualidade técnica</p>
-                <p className="text-lg font-bold text-gray-900">{a.qualidade}%</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Aplicabilidade</p>
-                <p className="text-lg font-bold text-gray-900">{a.aplicabilidade}%</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Clareza da solução</p>
-                <p className="text-lg font-bold text-gray-900">{a.clareza}%</p>
-              </div>
-            </div>
+                {avaliacao.parecer_descritivo && (
+                  <div className="mt-6 rounded-2xl border border-gray-100 bg-gray-50 p-5">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                      Parecer descritivo
+                    </p>
 
-            <div className="w-full bg-gray-100 rounded-full h-2.5 mb-2 flex overflow-hidden">
-               <div className="bg-[#f19f17] h-2.5 rounded-full" style={{ width: `${a.media}%` }}></div>
-            </div>
-            <div className="text-right mb-8">
-              <span className="text-sm font-bold text-gray-900">{a.media}% média</span>
-            </div>
+                    <p className="mt-3 whitespace-pre-line text-sm leading-7 text-gray-700">
+                      {avaliacao.parecer_descritivo}
+                    </p>
+                  </div>
+                )}
 
-            <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Parecer</p>
-              <p className="text-sm text-gray-700 leading-relaxed mb-4">{a.parecer}</p>
-              <p className="text-xs text-gray-400 italic">Avaliado por Prof. {profName} - {a.data}</p>
-            </div>
-          </article>
-        ))}
-      </div>
+                <div className="mt-6 flex justify-end">
+                  <Link
+                    to={`/professor/projetos/${avaliacao.projeto_id}`}
+                    className="flex items-center gap-1 text-sm font-bold text-[#f19f17] hover:text-amber-700"
+                  >
+                    Abrir projeto
+                    <ArrowRight size={16} />
+                  </Link>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="rounded-3xl border border-dashed border-gray-200 bg-white p-14 text-center">
+          <FileText size={42} className="mx-auto text-gray-300" />
+
+          <h2 className="mt-5 text-lg font-bold text-gray-700">
+            Nenhuma avaliação encontrada
+          </h2>
+
+          <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">
+            Você ainda não realizou avaliações ou nenhuma delas corresponde aos
+            filtros selecionados.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

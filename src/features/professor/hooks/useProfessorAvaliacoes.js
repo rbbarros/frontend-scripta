@@ -1,34 +1,65 @@
-import { useState, useEffect, useCallback } from "react";
-import { getProjetos } from "../../../lib/projetosApi";; // Mantemos authService por enquanto
+import { useCallback, useEffect, useState } from "react";
+
+import { getAvaliacaoPorId, getAvaliacoes } from "../../../lib/avaliacoesApi";
+
 import { getProfessorPerfil } from "../api/professorApi";
 
 export function useProfessorAvaliacoes() {
-  const [projetos, setProjetos] = useState([]);
   const [perfil, setPerfil] = useState(null);
+
+  const [avaliacoes, setAvaliacoes] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
-  const fetchDados = useCallback(async () => {
+  const [erro, setErro] = useState("");
+
+  const carregarAvaliacoes = useCallback(async () => {
     setLoading(true);
-    try {
-      const data = await getProjetos();
-      setProjetos(Array.isArray(data) ? data : []);
-    } catch (e) {
-      setProjetos([]);
-    }
+    setErro("");
 
     try {
-      const p = await getProfessorPerfil();
-      setPerfil(p);
-    } catch (e) {
-      console.error(e);
+      const [perfilData, resumosData] = await Promise.all([
+        getProfessorPerfil(),
+        getAvaliacoes(),
+      ]);
+
+      const resumos = Array.isArray(resumosData) ? resumosData : [];
+
+      const resultados = await Promise.allSettled(
+        resumos.map((avaliacao) => getAvaliacaoPorId(avaliacao.id)),
+      );
+
+      const avaliacoesCompletas = resultados.map((resultado, index) => {
+        if (resultado.status === "fulfilled") {
+          return resultado.value;
+        }
+
+        return resumos[index];
+      });
+
+      setPerfil(perfilData);
+      setAvaliacoes(avaliacoesCompletas);
+    } catch (error) {
+      setPerfil(null);
+      setAvaliacoes([]);
+
+      setErro(
+        error.message || "Não foi possível carregar o histórico de avaliações.",
+      );
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchDados();
-  }, [fetchDados]);
+    carregarAvaliacoes();
+  }, [carregarAvaliacoes]);
 
-  return { projetos, perfil, loading };
+  return {
+    perfil,
+    avaliacoes,
+    loading,
+    erro,
+    recarregar: carregarAvaliacoes,
+  };
 }

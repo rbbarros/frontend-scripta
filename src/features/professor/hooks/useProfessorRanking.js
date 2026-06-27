@@ -1,25 +1,39 @@
-import { useState, useEffect, useCallback } from "react";
-import { getProjetos } from "../../../lib/projetosApi";; // Manter authService por enquanto
+import { useCallback, useEffect, useState } from "react";
+
+import { getRanking } from "../../../lib/rankingApi";
 
 export function useProfessorRanking() {
-  const [projetos, setProjetos] = useState([]);
+  const [ranking, setRanking] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
-  const fetchRanking = useCallback(async () => {
+  const [erro, setErro] = useState("");
+
+  const carregarRanking = useCallback(async () => {
     setLoading(true);
+    setErro("");
+
     try {
-      const data = await getProjetos();
-      setProjetos(Array.isArray(data) ? data : []);
-    } catch (e) {
-      setProjetos([]);
+      const data = await getRanking();
+
+      setRanking(Array.isArray(data?.ranking) ? data.ranking : []);
+    } catch (error) {
+      setRanking([]);
+
+      setErro(error.message || "Não foi possível carregar o ranking.");
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchRanking();
-  }, [fetchRanking]);
+    carregarRanking();
+  }, [carregarRanking]);
 
-  return { projetos, loading };
+  return {
+    ranking,
+    loading,
+    erro,
+    recarregar: carregarRanking,
+  };
 }

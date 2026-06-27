@@ -1,147 +1,349 @@
-import React, { useState, useEffect } from "react";
-import { updateProjetoStatus } from "../../../lib/projetosApi";;
+import React, { useEffect, useMemo, useState } from "react";
+
+import { createAvaliacao, updateAvaliacao } from "../../../lib/avaliacoesApi";
+
 import { getProfessorPerfil } from "../api/professorApi";
 
-export default function RealizarAvaliacao({ projetoId, onClose }) {
+const CRITERIOS_INICIAIS = {
+  inovacao: 0,
+  tecnica: 0,
+  aplicabilidade: 0,
+  clareza: 0,
+};
+
+function obterConceito(media) {
+  if (media >= 95) {
+    return {
+      label: "Excelente",
+      classes: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    };
+  }
+
+  if (media >= 85) {
+    return {
+      label: "Ótimo",
+      classes: "border-blue-200 bg-blue-50 text-blue-700",
+    };
+  }
+
+  if (media >= 70) {
+    return {
+      label: "Bom",
+      classes: "border-amber-200 bg-amber-50 text-amber-700",
+    };
+  }
+
+  if (media >= 50) {
+    return {
+      label: "Ainda não suficiente",
+      classes: "border-orange-200 bg-orange-50 text-orange-700",
+    };
+  }
+
+  return {
+    label: "Insuficiente",
+    classes: "border-red-200 bg-red-50 text-red-700",
+  };
+}
+
+export default function RealizarAvaliacao({
+  projetoId,
+  avaliacaoExistente = null,
+  onClose,
+  onSaved,
+}) {
   const [perfil, setPerfil] = useState(null);
-  const [salvando, setSalvando] = useState(false);
-  
-  const [criterios, setCriterios] = useState({
-    inovacao: 0,
-    qualidade: 0,
-    aplicabilidade: 0,
-    clareza: 0,
-  });
+
+  const [criterios, setCriterios] = useState(CRITERIOS_INICIAIS);
+
   const [parecer, setParecer] = useState("");
 
+  const [salvando, setSalvando] = useState(false);
+
+  const [erro, setErro] = useState("");
+
   useEffect(() => {
-    getProfessorPerfil().then(setPerfil).catch(() => {});
+    getProfessorPerfil()
+      .then(setPerfil)
+      .catch(() => {
+        setPerfil(null);
+      });
   }, []);
 
-  const getLabelAndColor = (val) => {
-    if (val >= 95) return { label: "Excelente", color: "bg-emerald-50 text-emerald-700 border-emerald-200" };
-    if (val >= 85) return { label: "Ótimo", color: "bg-blue-50 text-blue-700 border-blue-200" };
-    if (val >= 70) return { label: "Bom", color: "bg-amber-50 text-amber-700 border-amber-200" };
-    if (val >= 50) return { label: "Ainda não suficiente", color: "bg-orange-50 text-orange-700 border-orange-200" };
-    return { label: "Insuficiente", color: "bg-red-50 text-red-700 border-red-200" };
-  };
+  useEffect(() => {
+    if (!avaliacaoExistente) {
+      setCriterios(CRITERIOS_INICIAIS);
 
-  const handleSlider = (e, field) => {
-    setCriterios({ ...criterios, [field]: parseInt(e.target.value, 10) });
-  };
+      setParecer("");
+      return;
+    }
 
-  const handleSubmit = async () => {
+    setCriterios({
+      inovacao: Number(avaliacaoExistente.nota_inovacao),
+      tecnica: Number(avaliacaoExistente.nota_tecnica),
+      aplicabilidade: Number(avaliacaoExistente.nota_aplicabilidade),
+      clareza: Number(avaliacaoExistente.nota_clareza),
+    });
+
+    setParecer(avaliacaoExistente.parecer_descritivo || "");
+  }, [avaliacaoExistente]);
+
+  const media = useMemo(() => {
+    const soma =
+      criterios.inovacao +
+      criterios.tecnica +
+      criterios.aplicabilidade +
+      criterios.clareza;
+
+    return Number((soma / 4).toFixed(2));
+  }, [criterios]);
+
+  const conceito = obterConceito(media);
+
+  const metricas = [
+    {
+      id: "inovacao",
+      titulo: "Inovação",
+      descricao: "Grau de originalidade e criatividade da solução.",
+    },
+    {
+      id: "tecnica",
+      titulo: "Qualidade técnica",
+      descricao: "Completude, robustez e boas práticas de desenvolvimento.",
+    },
+    {
+      id: "aplicabilidade",
+      titulo: "Aplicabilidade",
+      descricao: "Potencial de uso real e impacto prático da solução.",
+    },
+    {
+      id: "clareza",
+      titulo: "Clareza da solução",
+      descricao: "Qualidade da documentação e da apresentação do projeto.",
+    },
+  ];
+
+  function alterarCriterio(event, campo) {
+    const valor = Number(event.target.value);
+
+    setCriterios((criteriosAtuais) => ({
+      ...criteriosAtuais,
+      [campo]: valor,
+    }));
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    const parecerLimpo = parecer.trim();
+
+    if (parecerLimpo.length < 10) {
+      setErro("O parecer deve possuir pelo menos 10 caracteres.");
+
+      return;
+    }
+
     setSalvando(true);
+    setErro("");
+
+    const dados = {
+      nota_inovacao: criterios.inovacao,
+      nota_tecnica: criterios.tecnica,
+      nota_aplicabilidade: criterios.aplicabilidade,
+      nota_clareza: criterios.clareza,
+      parecer_descritivo: parecerLimpo,
+    };
+
     try {
-      await updateProjetoStatus(projetoId, "aprovado");
-      alert("Avaliação salva com sucesso!");
+      if (avaliacaoExistente?.id) {
+        await updateAvaliacao(avaliacaoExistente.id, dados);
+      } else {
+        await createAvaliacao({
+          projeto_id: Number(projetoId),
+          ...dados,
+        });
+      }
+
+      await onSaved?.();
       onClose();
-    } catch (err) {
-      alert("Erro ao salvar avaliação. " + err.message);
+    } catch (error) {
+      setErro(error.message || "Não foi possível salvar a avaliação.");
     } finally {
       setSalvando(false);
     }
-  };
+  }
 
-  const metrics = [
-    { id: "inovacao", title: "Inovação", desc: "Grau de originalidade e criatividade da solução" },
-    { id: "qualidade", title: "Qualidade técnica", desc: "Completude, robustez e boas práticas de desenvolvimento" },
-    { id: "aplicabilidade", title: "Aplicabilidade", desc: "Potencial de uso real e impacto prático da solução" },
-    { id: "clareza", title: "Clareza da solução", desc: "Qualidade da documentação e apresentação do projeto" },
-  ];
-
-  const today = new Date().toLocaleDateString("pt-BR");
+  const dataAtual = new Date().toLocaleDateString("pt-BR");
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-xl flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 className="text-lg font-bold text-gray-900">Rubrica de Avaliação</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </button>
-        </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+      <form
+        onSubmit={handleSubmit}
+        className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-y-auto rounded-3xl bg-white shadow-xl"
+      >
+        <header className="flex items-center justify-between border-b border-gray-100 p-6">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">
+              {avaliacaoExistente ? "Editar avaliação" : "Rubrica de avaliação"}
+            </h2>
 
-        {/* Info text */}
-        <div className="px-6 py-4 bg-blue-50/50 border-b border-gray-100">
-          <p className="text-xs text-blue-700 font-medium">
-            <span className="font-bold">Métricas conceituais Senac:</span> Excelente (≥ 95%) - Ótimo (85-94%) - Bom (70-84%) - Ainda não suficiente (50-69%) - Insuficiente (&lt; 50%)
+            <p className="mt-1 text-xs text-gray-500">Projeto #{projetoId}</p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={salvando}
+            className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
+            aria-label="Fechar avaliação"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </header>
+
+        <div className="border-b border-gray-100 bg-blue-50/50 px-6 py-4">
+          <p className="text-xs font-medium text-blue-700">
+            <strong>Métricas conceituais:</strong> Excelente (95–100), Ótimo
+            (85–94), Bom (70–84), Ainda não suficiente (50–69) e Insuficiente
+            (0–49).
           </p>
         </div>
 
-        {/* Sliders */}
-        <div className="p-6 space-y-8 flex-1">
-          {metrics.map((m) => {
-            const val = criterios[m.id];
-            const badge = getLabelAndColor(val);
+        <div className="flex-1 space-y-8 p-6">
+          {erro && (
+            <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-medium text-red-600">
+              {erro}
+            </div>
+          )}
+
+          <section className="flex flex-col justify-between gap-4 rounded-2xl border border-gray-100 bg-gray-50 p-5 sm:flex-row sm:items-center">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
+                Média calculada
+              </p>
+
+              <p className="mt-1 text-3xl font-bold text-gray-900">
+                {media.toFixed(2)}
+              </p>
+            </div>
+
+            <span
+              className={`self-start rounded-lg border px-3 py-1.5 text-xs font-bold sm:self-auto ${conceito.classes}`}
+            >
+              {conceito.label}
+            </span>
+          </section>
+
+          {metricas.map((metrica) => {
+            const valor = criterios[metrica.id];
+
+            const conceitoCriterio = obterConceito(valor);
+
             return (
-              <div key={m.id}>
-                <div className="flex justify-between items-start mb-2">
+              <section key={metrica.id}>
+                <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                   <div>
-                    <h4 className="text-sm font-bold text-gray-900">{m.title}</h4>
-                    <p className="text-xs text-gray-500">{m.desc}</p>
+                    <h3 className="text-sm font-bold text-gray-900">
+                      {metrica.titulo}
+                    </h3>
+
+                    <p className="mt-1 text-xs text-gray-500">
+                      {metrica.descricao}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-gray-900">{val}%</span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${badge.color}`}>
-                      {badge.label}
+
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="text-sm font-bold text-gray-900">
+                      {valor}
+                    </span>
+
+                    <span
+                      className={`rounded border px-2 py-0.5 text-[10px] font-bold ${conceitoCriterio.classes}`}
+                    >
+                      {conceitoCriterio.label}
                     </span>
                   </div>
                 </div>
-                
-                <div className="relative pt-1">
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="100" 
-                    value={val} 
-                    onChange={(e) => handleSlider(e, m.id)}
-                    className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#f19f17]"
-                  />
-                  <div className="flex justify-between text-[10px] font-medium text-gray-400 mt-1">
-                    <span>0%</span>
-                    <span>50%</span>
-                    <span>100%</span>
-                  </div>
+
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={valor}
+                  onChange={(event) => alterarCriterio(event, metrica.id)}
+                  className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-[#f19f17]"
+                />
+
+                <div className="mt-1 flex justify-between text-[10px] font-medium text-gray-400">
+                  <span>0</span>
+                  <span>50</span>
+                  <span>100</span>
                 </div>
-              </div>
+              </section>
             );
           })}
 
-          <div className="pt-4 border-t border-gray-100">
-            <h4 className="text-sm font-bold text-gray-900 mb-2">Parecer textual</h4>
-            <textarea
-              rows="4"
-              placeholder="Descreva sua análise sobre o projeto, pontos fortes, pontos de melhoria e considerações finais..."
-              className="w-full p-4 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#f19f17] focus:ring-2 focus:ring-amber-50 transition-all resize-none"
-              value={parecer}
-              onChange={(e) => setParecer(e.target.value)}
-            ></textarea>
-          </div>
+          <section className="border-t border-gray-100 pt-6">
+            <label
+              htmlFor="parecer"
+              className="mb-2 block text-sm font-bold text-gray-900"
+            >
+              Parecer descritivo
+            </label>
 
-          <div>
-            <p className="text-xs text-gray-400">Avaliador registrado automaticamente: Prof. {perfil?.nome || "Ana Silva"} - {today}</p>
-          </div>
+            <textarea
+              id="parecer"
+              rows="5"
+              minLength={10}
+              required
+              placeholder="Descreva os pontos fortes, pontos de melhoria e suas considerações sobre o projeto."
+              value={parecer}
+              onChange={(event) => setParecer(event.target.value)}
+              className="w-full resize-none rounded-xl border border-gray-200 p-4 text-sm outline-none transition-all focus:border-[#f19f17] focus:ring-2 focus:ring-amber-50"
+            />
+          </section>
+
+          <p className="text-xs text-gray-400">
+            Avaliador: {perfil?.nome || "Professor autenticado"} • {dataAtual}
+          </p>
         </div>
 
-        {/* Footer actions */}
-        <div className="p-6 border-t border-gray-100 flex gap-3">
-          <button 
-            onClick={handleSubmit} 
-            disabled={salvando}
-            className="px-6 py-2.5 bg-[#f19f17] text-white font-bold rounded-xl hover:bg-amber-600 transition-colors disabled:opacity-50"
-          >
-            {salvando ? "Salvando..." : "Salvar Avaliação"}
-          </button>
-          <button 
+        <footer className="flex flex-col-reverse gap-3 border-t border-gray-100 p-6 sm:flex-row">
+          <button
+            type="button"
             onClick={onClose}
-            className="px-6 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors"
+            disabled={salvando}
+            className="rounded-xl border border-gray-200 bg-white px-6 py-2.5 font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
           >
             Cancelar
           </button>
-        </div>
-      </div>
+
+          <button
+            type="submit"
+            disabled={salvando}
+            className="rounded-xl bg-[#f19f17] px-6 py-2.5 font-bold text-white hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {salvando
+              ? "Salvando..."
+              : avaliacaoExistente
+                ? "Atualizar avaliação"
+                : "Salvar avaliação"}
+          </button>
+        </footer>
+      </form>
     </div>
   );
 }
