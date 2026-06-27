@@ -6,43 +6,6 @@ import { Link } from "react-router-dom";
 
 import { useProfessorRanking } from "../hooks/useProfessorRanking";
 
-function obterConceito(media) {
-  const valor = Number(media);
-
-  if (valor >= 95) {
-    return {
-      label: "Excelente",
-      classes: "border-emerald-100 bg-emerald-50 text-emerald-700",
-    };
-  }
-
-  if (valor >= 85) {
-    return {
-      label: "Ótimo",
-      classes: "border-blue-100 bg-blue-50 text-blue-700",
-    };
-  }
-
-  if (valor >= 70) {
-    return {
-      label: "Bom",
-      classes: "border-amber-100 bg-amber-50 text-amber-700",
-    };
-  }
-
-  if (valor >= 50) {
-    return {
-      label: "Ainda não suficiente",
-      classes: "border-orange-100 bg-orange-50 text-orange-700",
-    };
-  }
-
-  return {
-    label: "Insuficiente",
-    classes: "border-red-100 bg-red-50 text-red-700",
-  };
-}
-
 function obterPosicaoClasses(posicao) {
   if (posicao === 1) {
     return {
@@ -228,8 +191,6 @@ export default function Ranking() {
           {tresPrimeiros.map((projeto) => {
             const posicao = obterPosicaoClasses(projeto.posicao);
 
-            const conceito = obterConceito(projeto.media_geral);
-
             return (
               <Link
                 key={projeto.projeto_id}
@@ -255,12 +216,6 @@ export default function Ranking() {
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
                   <span className="text-lg font-bold text-[#f19f17]">
                     {Number(projeto.media_geral).toFixed(2)}
-                  </span>
-
-                  <span
-                    className={`rounded-lg border px-2.5 py-1 text-[10px] font-bold ${conceito.classes}`}
-                  >
-                    {conceito.label}
                   </span>
                 </div>
 
@@ -288,8 +243,6 @@ export default function Ranking() {
           <div className="space-y-4">
             {rankingFiltrado.map((projeto) => {
               const posicao = obterPosicaoClasses(projeto.posicao);
-
-              const conceito = obterConceito(projeto.media_geral);
 
               return (
                 <Link
@@ -339,12 +292,6 @@ export default function Ranking() {
                         Avaliações
                       </span>
                     </div>
-
-                    <span
-                      className={`rounded-lg border px-3 py-1 text-xs font-bold ${conceito.classes}`}
-                    >
-                      {conceito.label}
-                    </span>
                   </div>
                 </Link>
               );
