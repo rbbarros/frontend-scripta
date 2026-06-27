@@ -6,14 +6,8 @@ import { apiRequest } from "./api";
 export async function getMeusPortfolios() {
   return apiRequest("/portfolios/meus");
 }
-
-/*
- * Mantido temporariamente porque a área da empresa
- * ainda importa esta função. O fluxo da empresa será
- * corrigido separadamente.
- */
-export async function getPortfolioList() {
-  return apiRequest("/portfolios/");
+export async function getPortfoliosPublicos() {
+  return apiRequest("/portfolios/publicos");
 }
 
 export async function getPortfolioPorId(id) {

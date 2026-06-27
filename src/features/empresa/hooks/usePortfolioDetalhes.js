@@ -1,27 +1,87 @@
-import { useState, useEffect } from "react";
-import { apiRequest } from "../../../lib/api";
+import { useEffect, useState } from "react";
+
+import { getPortfolioPorId } from "../../../lib/portfolioApi";
+import { getLinksDoProjeto, getProjetoPorId } from "../../../lib/projetosApi";
 
 export function usePortfolioDetalhes(id) {
-  const [aluno, setAluno] = useState(null);
+  const [portfolio, setPortfolio] = useState(null);
+
+  const [projeto, setProjeto] = useState(null);
+
+  const [links, setLinks] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
+  const [erro, setErro] = useState("");
+
   useEffect(() => {
-    if (!id) return;
-    
-    async function fetchDetalhes() {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    let componenteAtivo = true;
+
+    async function carregarDetalhes() {
+      setLoading(true);
+      setErro("");
+
       try {
-        const data = await apiRequest(`/alunos/${id}`);
-        setAluno(data);
+        const portfolioData = await getPortfolioPorId(id);
+
+        const [projetoResultado, linksResultado] = await Promise.allSettled([
+          getProjetoPorId(portfolioData.projeto_id),
+
+          getLinksDoProjeto(portfolioData.projeto_id),
+        ]);
+
+        if (!componenteAtivo) {
+          return;
+        }
+
+        setPortfolio(portfolioData);
+
+        setProjeto(
+          projetoResultado.status === "fulfilled"
+            ? projetoResultado.value
+            : null,
+        );
+
+        setLinks(
+          linksResultado.status === "fulfilled" &&
+            Array.isArray(linksResultado.value)
+            ? linksResultado.value
+            : [],
+        );
       } catch (error) {
-        console.error("Erro ao buscar detalhes do aluno:", error);
-        setAluno(null);
+        if (!componenteAtivo) {
+          return;
+        }
+
+        setPortfolio(null);
+        setProjeto(null);
+        setLinks([]);
+
+        setErro(error.message || "Não foi possível carregar o portfólio.");
       } finally {
-        setLoading(false);
+        if (componenteAtivo) {
+          setLoading(false);
+        }
       }
     }
-    
-    fetchDetalhes();
+
+    carregarDetalhes();
+
+    return () => {
+      componenteAtivo = false;
+    };
   }, [id]);
 
-  return { aluno, loading };
+  return {
+    portfolio,
+    projeto,
+    links,
+    loading,
+    erro,
+  };
 }

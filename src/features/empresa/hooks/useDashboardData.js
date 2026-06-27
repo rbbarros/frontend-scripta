@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
-import { getEmpresaPerfil } from '../api/empresaApi';
+import { useState, useEffect } from "react";
+import { getEmpresaPerfil } from "../api/empresaApi";
 import { getProjetos } from "../../../lib/projetosApi";
-import { getPortfolioList } from "../../../lib/portfolioApi";; // TODO: Extrair essas também depois
-
+import { getPortfoliosPublicos } from "../../../lib/portfolioApi";
 export function useDashboardData() {
   const [perfil, setPerfil] = useState(null);
   const [projetos, setProjetos] = useState([]);
@@ -15,19 +14,19 @@ export function useDashboardData() {
         const [perfilData, projetosData, portfoliosData] = await Promise.all([
           getEmpresaPerfil(),
           getProjetos(),
-          getPortfolioList()
+          getPortfoliosPublicos(),
         ]);
-        
+
         setPerfil(perfilData);
         setProjetos(Array.isArray(projetosData) ? projetosData : []);
         setPortfolios(Array.isArray(portfoliosData) ? portfoliosData : []);
       } catch (error) {
-        console.error('Erro ao buscar dados do dashboard:', error);
+        console.error("Erro ao buscar dados do dashboard:", error);
       } finally {
         setLoading(false);
       }
     }
-    
+
     fetchData();
   }, []);
 

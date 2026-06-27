@@ -1,81 +1,139 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
+import { Briefcase, Search, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { ExternalLink, User } from "lucide-react";
+
 import { useEmpresaPortfolios } from "../hooks/useEmpresaPortfolios";
 
 export default function Portfolios() {
-  const { alunos, loading } = useEmpresaPortfolios();
+  const { portfolios, loading, erro } = useEmpresaPortfolios();
+
   const navigate = useNavigate();
 
-  // Dados mockados complementares pois o backend não envia métricas de projetos/certificados na rota /alunos/
-  const mockTechs = ["Python", "TensorFlow", "React", "+2"];
+  const [busca, setBusca] = useState("");
+
+  const portfoliosFiltrados = useMemo(() => {
+    const termo = busca.trim().toLowerCase();
+
+    if (!termo) {
+      return portfolios;
+    }
+
+    return portfolios.filter(
+      (portfolio) =>
+        portfolio.nome_aluno?.toLowerCase().includes(termo) ||
+        portfolio.titulo_projeto?.toLowerCase().includes(termo) ||
+        portfolio.curso?.toLowerCase().includes(termo) ||
+        portfolio.semestre?.toLowerCase().includes(termo),
+    );
+  }, [busca, portfolios]);
+
+  if (loading) {
+    return (
+      <div className="rounded-3xl border border-gray-100 bg-white p-10 text-center shadow-sm">
+        <p className="text-sm font-semibold text-gray-400">
+          Carregando portfólios públicos...
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="animate-in fade-in zoom-in-95 duration-200 pb-12">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Portfólios</h1>
-        <p className="text-sm text-gray-500 mt-1">Visualize a trajetória acadêmica dos estudantes da Faculdade Senac</p>
+    <div className="pb-12">
+      <header className="mb-8">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+          Portfólios
+        </h1>
+
+        <p className="mt-1 text-sm text-gray-500">
+          Conheça projetos aprovados que estudantes disponibilizaram
+          publicamente.
+        </p>
+      </header>
+
+      {erro && (
+        <div className="mb-6 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-medium text-red-600">
+          {erro}
+        </div>
+      )}
+
+      <div className="mb-7 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+        <div className="flex items-center gap-3">
+          <Search size={18} className="text-gray-400" />
+
+          <input
+            type="search"
+            value={busca}
+            onChange={(event) => setBusca(event.target.value)}
+            placeholder="Buscar por aluno, projeto, curso ou semestre"
+            className="w-full bg-transparent text-sm text-gray-700 outline-none placeholder:text-gray-400"
+          />
+        </div>
       </div>
 
-      {loading ? (
-        <div className="text-center py-12 text-gray-400 font-semibold animate-pulse">Carregando portfólios...</div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {alunos.map((aluno) => {
-            return (
-              <div 
-                key={aluno.id} 
-                className="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm hover:shadow-md hover:border-gray-200 transition-all flex flex-col items-center cursor-pointer group"
-                onClick={() => navigate(`/empresa/portfolios/${aluno.id}`)}
-              >
-                <div className="w-20 h-20 rounded-full bg-emerald-500 text-white flex items-center justify-center text-3xl mb-4 shadow-sm group-hover:scale-105 transition-transform">
-                  <User size={36} />
-                </div>
-                
-                <h3 className="font-bold text-gray-900 text-lg leading-snug text-center">{aluno.nome}</h3>
-                <p className="text-xs text-gray-500 text-center mt-1">{aluno.curso}</p>
-                <p className="text-[10px] text-gray-400 text-center mt-1 font-semibold uppercase tracking-wider">4º semestre</p>
-
-                <div className="flex gap-4 mt-4 mb-6">
-                  <a 
-                    href={aluno.github_url || "#"} 
-                    className="text-gray-400 hover:text-gray-700 flex items-center gap-1 text-xs font-semibold"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg> GitHub
-                  </a>
-                  <a 
-                    href={aluno.linkedin_url || "#"} 
-                    className="text-blue-500 hover:text-blue-600 flex items-center gap-1 text-xs font-semibold"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg> LinkedIn
-                  </a>
+      {portfoliosFiltrados.length > 0 ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {portfoliosFiltrados.map((portfolio) => (
+            <article
+              key={portfolio.id}
+              className="flex flex-col rounded-[2rem] border border-gray-100 bg-white p-7 shadow-sm transition-all hover:border-emerald-100 hover:shadow-md"
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                  <User size={26} />
                 </div>
 
-                <div className="w-full space-y-3 mb-6">
-                  <div className="flex justify-between items-center text-sm font-semibold text-gray-500">
-                    <span>Projetos</span>
-                    <span className="text-gray-900 font-bold">2</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm font-semibold text-gray-500">
-                    <span>Certificados</span>
-                    <span className="text-gray-900 font-bold">2</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm font-semibold text-gray-500">
-                    <span>Média geral</span>
-                    <span className="text-[#f19f17] font-bold">92%</span>
-                  </div>
-                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                    Estudante
+                  </p>
 
-                <div className="flex flex-wrap gap-2 mt-auto justify-center w-full">
-                  {mockTechs.map((t, idx) => (
-                    <span key={idx} className="bg-gray-50 text-gray-500 px-3 py-1 rounded-full text-[10px] font-bold border border-gray-100">{t}</span>
-                  ))}
+                  <h2 className="mt-1 font-bold text-gray-900">
+                    {portfolio.nome_aluno}
+                  </h2>
                 </div>
               </div>
-            );
-          })}
+
+              <div className="mt-6 flex-1">
+                <div className="flex items-center gap-2 text-[#f19f17]">
+                  <Briefcase size={17} />
+
+                  <span className="text-xs font-bold uppercase tracking-wide">
+                    Projeto aprovado
+                  </span>
+                </div>
+
+                <h3 className="mt-3 text-lg font-bold leading-snug text-gray-900">
+                  {portfolio.titulo_projeto}
+                </h3>
+
+                <div className="mt-4 space-y-1 text-sm text-gray-500">
+                  <p>Curso: {portfolio.curso}</p>
+
+                  <p>Semestre: {portfolio.semestre}</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => navigate(`/empresa/portfolios/${portfolio.id}`)}
+                className="mt-7 rounded-xl bg-[#f19f17] px-5 py-3 text-sm font-bold text-white hover:bg-amber-600"
+              >
+                Visualizar portfólio
+              </button>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-3xl border border-dashed border-gray-200 bg-white p-14 text-center shadow-sm">
+          <Briefcase size={42} className="mx-auto text-gray-300" />
+
+          <h2 className="mt-5 text-lg font-bold text-gray-700">
+            Nenhum portfólio encontrado
+          </h2>
+
+          <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">
+            Não existem projetos públicos compatíveis com a busca realizada.
+          </p>
         </div>
       )}
     </div>

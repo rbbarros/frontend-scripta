@@ -1,25 +1,53 @@
-import { useState, useEffect } from "react";
-import { getAlunos } from "../../aluno/api/alunoApi";
+import { useEffect, useState } from "react";
+import { getPortfoliosPublicos } from "../../../lib/portfolioApi";
 
 export function useEmpresaPortfolios() {
-  const [alunos, setAlunos] = useState([]);
+  const [portfolios, setPortfolios] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState("");
 
   useEffect(() => {
-    async function fetchPortfolios() {
+    let componenteAtivo = true;
+
+    async function carregarPortfolios() {
+      setLoading(true);
+      setErro("");
+
       try {
-        const data = await getAlunos();
-        setAlunos(Array.isArray(data) ? data : []);
+        const data = await getPortfoliosPublicos();
+
+        if (!componenteAtivo) {
+          return;
+        }
+
+        setPortfolios(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error("Erro ao buscar alunos:", error);
-        setAlunos([]);
+        if (!componenteAtivo) {
+          return;
+        }
+
+        setPortfolios([]);
+
+        setErro(
+          error.message || "Não foi possível carregar os portfólios públicos.",
+        );
       } finally {
-        setLoading(false);
+        if (componenteAtivo) {
+          setLoading(false);
+        }
       }
     }
-    
-    fetchPortfolios();
+
+    carregarPortfolios();
+
+    return () => {
+      componenteAtivo = false;
+    };
   }, []);
 
-  return { alunos, loading };
+  return {
+    portfolios,
+    loading,
+    erro,
+  };
 }
