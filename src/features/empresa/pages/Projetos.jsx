@@ -133,11 +133,7 @@ export default function Projetos() {
         <section className="rounded-3xl border border-gray-100 bg-white p-8 shadow-sm">
           <div className="flex flex-col justify-between gap-5 border-b border-gray-100 pb-7 md:flex-row md:items-start">
             <div>
-              <span className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
-                {projetoSelecionado.posicao}º no ranking
-              </span>
-
-              <h2 className="mt-4 text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-gray-900">
                 {projetoSelecionado.titulo}
               </h2>
 
@@ -338,14 +334,16 @@ export default function Projetos() {
               key={projeto.projeto_id}
               className="flex flex-col rounded-3xl border border-gray-100 bg-white p-6 shadow-sm transition-all hover:border-[#f19f17] hover:shadow-md"
             >
-              <div className="flex items-start justify-between gap-4">
-                <span className="rounded-full border border-amber-100 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
-                  {projeto.posicao}º
-                </span>
+              <div className="flex justify-end">
+                <div className="text-right">
+                  <span className="text-lg font-bold text-[#f19f17]">
+                    {Number(projeto.media_geral).toFixed(2)}
+                  </span>
 
-                <span className="text-sm font-bold text-[#f19f17]">
-                  {Number(projeto.media_geral).toFixed(2)}
-                </span>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                    Média geral
+                  </p>
+                </div>
               </div>
 
               <h2 className="mt-5 text-lg font-bold leading-snug text-gray-900">

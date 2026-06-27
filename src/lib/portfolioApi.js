@@ -1,13 +1,15 @@
 import { apiRequest } from "./api";
 
-/*
- * Endpoint específico do aluno autenticado.
- */
 export async function getMeusPortfolios() {
   return apiRequest("/portfolios/meus");
 }
+
 export async function getPortfoliosPublicos() {
   return apiRequest("/portfolios/publicos");
+}
+
+export async function getPortfoliosDoAluno(idAluno) {
+  return apiRequest(`/portfolios/aluno/${idAluno}`);
 }
 
 export async function getPortfolioPorId(id) {

@@ -1,22 +1,25 @@
 import { useEffect, useState } from "react";
 
-import { getPortfolioPorId } from "../../../lib/portfolioApi";
+import { getPortfoliosDoAluno } from "../../../lib/portfolioApi";
+
 import { getLinksDoProjeto, getProjetoPorId } from "../../../lib/projetosApi";
 
-export function usePortfolioDetalhes(id) {
-  const [portfolio, setPortfolio] = useState(null);
+export function usePortfolioDetalhes(alunoId) {
+  const [aluno, setAluno] = useState(null);
 
-  const [projeto, setProjeto] = useState(null);
-
-  const [links, setLinks] = useState([]);
+  const [projetos, setProjetos] = useState([]);
 
   const [loading, setLoading] = useState(true);
 
   const [erro, setErro] = useState("");
 
   useEffect(() => {
-    if (!id) {
+    if (!alunoId) {
+      setAluno(null);
+      setProjetos([]);
+      setErro("Aluno não identificado.");
       setLoading(false);
+
       return;
     }
 
@@ -27,40 +30,82 @@ export function usePortfolioDetalhes(id) {
       setErro("");
 
       try {
-        const portfolioData = await getPortfolioPorId(id);
+        const portfolios = await getPortfoliosDoAluno(alunoId);
 
-        const [projetoResultado, linksResultado] = await Promise.allSettled([
-          getProjetoPorId(portfolioData.projeto_id),
+        if (!Array.isArray(portfolios) || portfolios.length === 0) {
+          throw new Error(
+            "Este estudante não possui projetos públicos no portfólio.",
+          );
+        }
 
-          getLinksDoProjeto(portfolioData.projeto_id),
-        ]);
+        const resultados = await Promise.all(
+          portfolios.map(async (portfolio) => {
+            const [projetoResultado, linksResultado] = await Promise.allSettled(
+              [
+                getProjetoPorId(portfolio.projeto_id),
+                getLinksDoProjeto(portfolio.projeto_id),
+              ],
+            );
+
+            return {
+              portfolio_id: portfolio.id,
+
+              projeto_id: portfolio.projeto_id,
+
+              titulo: portfolio.titulo_projeto,
+
+              curso: portfolio.curso,
+
+              semestre: portfolio.semestre,
+
+              detalhes:
+                projetoResultado.status === "fulfilled"
+                  ? projetoResultado.value
+                  : null,
+
+              links:
+                linksResultado.status === "fulfilled" &&
+                Array.isArray(linksResultado.value)
+                  ? linksResultado.value
+                  : [],
+            };
+          }),
+        );
 
         if (!componenteAtivo) {
           return;
         }
 
-        setPortfolio(portfolioData);
+        const cursos = [
+          ...new Set(
+            portfolios.map((portfolio) => portfolio.curso).filter(Boolean),
+          ),
+        ].sort((a, b) => a.localeCompare(b, "pt-BR"));
 
-        setProjeto(
-          projetoResultado.status === "fulfilled"
-            ? projetoResultado.value
-            : null,
-        );
+        const semestres = [
+          ...new Set(
+            portfolios.map((portfolio) => portfolio.semestre).filter(Boolean),
+          ),
+        ].sort((a, b) => a.localeCompare(b, "pt-BR"));
 
-        setLinks(
-          linksResultado.status === "fulfilled" &&
-            Array.isArray(linksResultado.value)
-            ? linksResultado.value
-            : [],
-        );
+        setAluno({
+          id: Number(alunoId),
+
+          nome: portfolios[0].nome_aluno,
+
+          cursos,
+
+          semestres,
+        });
+
+        setProjetos(resultados);
       } catch (error) {
         if (!componenteAtivo) {
           return;
         }
 
-        setPortfolio(null);
-        setProjeto(null);
-        setLinks([]);
+        setAluno(null);
+        setProjetos([]);
 
         setErro(error.message || "Não foi possível carregar o portfólio.");
       } finally {
@@ -75,12 +120,11 @@ export function usePortfolioDetalhes(id) {
     return () => {
       componenteAtivo = false;
     };
-  }, [id]);
+  }, [alunoId]);
 
   return {
-    portfolio,
-    projeto,
-    links,
+    aluno,
+    projetos,
     loading,
     erro,
   };

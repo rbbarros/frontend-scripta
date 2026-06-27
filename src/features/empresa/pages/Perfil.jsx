@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 
 import { getPortfoliosPublicos } from "../../../lib/portfolioApi";
-import { getRanking } from "../../../lib/rankingApi";
 
 import { getEmpresaPerfil, updateEmpresaPerfil } from "../api/empresaApi";
 
@@ -27,7 +26,7 @@ export default function Perfil() {
 
   const [metricas, setMetricas] = useState({
     projetosPublicos: 0,
-    talentos: 0,
+    portfoliosPublicos: 0,
   });
 
   const [isEditing, setIsEditing] = useState(false);
@@ -47,12 +46,10 @@ export default function Perfil() {
       setCarregandoPerfil(true);
       setErro("");
 
-      const [perfilResultado, rankingResultado, portfoliosResultado] =
-        await Promise.allSettled([
-          getEmpresaPerfil(),
-          getRanking(),
-          getPortfoliosPublicos(),
-        ]);
+      const [perfilResultado, portfoliosResultado] = await Promise.allSettled([
+        getEmpresaPerfil(),
+        getPortfoliosPublicos(),
+      ]);
 
       if (!componenteAtivo) {
         return;
@@ -76,27 +73,28 @@ export default function Perfil() {
         );
       }
 
-      const projetos =
-        rankingResultado.status === "fulfilled" &&
-        Array.isArray(rankingResultado.value?.ranking)
-          ? rankingResultado.value.ranking
-          : [];
-
       const portfolios =
         portfoliosResultado.status === "fulfilled" &&
         Array.isArray(portfoliosResultado.value)
           ? portfoliosResultado.value
           : [];
 
+      const projetosDistintos = new Set(
+        portfolios
+          .map((portfolio) => portfolio.projeto_id)
+          .filter((id) => id !== undefined && id !== null),
+      );
+
       const alunosDistintos = new Set(
         portfolios
           .map((portfolio) => portfolio.aluno_id)
-          .filter((alunoId) => alunoId !== undefined && alunoId !== null),
+          .filter((id) => id !== undefined && id !== null),
       );
 
       setMetricas({
-        projetosPublicos: projetos.length,
-        talentos: alunosDistintos.size,
+        projetosPublicos: projetosDistintos.size,
+
+        portfoliosPublicos: alunosDistintos.size,
       });
 
       setCarregandoPerfil(false);
@@ -248,10 +246,12 @@ export default function Perfil() {
               <Users size={19} className="mb-2 text-emerald-600" />
 
               <span className="text-2xl font-bold text-gray-900">
-                {metricas.talentos}
+                {metricas.portfoliosPublicos}
               </span>
 
-              <span className="mt-1 text-xs text-gray-500">Talentos</span>
+              <span className="mt-1 text-xs text-gray-500">
+                Portfólios públicos
+              </span>
             </div>
           </div>
         </aside>

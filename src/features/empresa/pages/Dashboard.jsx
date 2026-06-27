@@ -1,6 +1,6 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 
-import { ArrowRight, Briefcase, FolderOpen, Trophy, Users } from "lucide-react";
+import { ArrowRight, Briefcase, FolderOpen, Trophy } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
 
@@ -29,6 +29,26 @@ export default function Dashboard() {
       .sort((a, b) => b.quantidade - a.quantidade);
   }, [projetos]);
 
+  const totalProjetosPublicos = useMemo(
+    () =>
+      new Set(
+        portfolios
+          .map((portfolio) => portfolio.projeto_id)
+          .filter((id) => id !== undefined && id !== null),
+      ).size,
+    [portfolios],
+  );
+
+  const totalPortfoliosPublicos = useMemo(
+    () =>
+      new Set(
+        portfolios
+          .map((portfolio) => portfolio.aluno_id)
+          .filter((id) => id !== undefined && id !== null),
+      ).size,
+    [portfolios],
+  );
+
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
@@ -46,7 +66,7 @@ export default function Dashboard() {
 
         <p className="mt-1 text-sm text-gray-500">
           Bem-vindo, {perfil?.nome_empresa || "Empresa"}. Explore projetos e
-          talentos do Senac.
+          portfólios do Senac.
         </p>
       </header>
 
@@ -64,7 +84,7 @@ export default function Dashboard() {
 
           <div>
             <p className="text-3xl font-bold text-gray-900">
-              {projetos.length}
+              {totalProjetosPublicos}
             </p>
 
             <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -80,7 +100,7 @@ export default function Dashboard() {
 
           <div>
             <p className="text-3xl font-bold text-gray-900">
-              {portfolios.length}
+              {totalPortfoliosPublicos}
             </p>
 
             <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -190,15 +210,6 @@ export default function Dashboard() {
                 className="w-full rounded-xl border-2 border-[#f19f17] px-4 py-3 text-sm font-bold text-[#f19f17] hover:bg-amber-50"
               >
                 Ver portfólios
-              </button>
-
-              <button
-                type="button"
-                onClick={() => navigate("/empresa/talentos")}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#f19f17] px-4 py-3 text-sm font-bold text-[#f19f17] hover:bg-amber-50"
-              >
-                <Users size={17} />
-                Identificar talentos
               </button>
             </div>
           </section>
