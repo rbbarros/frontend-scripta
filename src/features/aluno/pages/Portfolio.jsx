@@ -1,225 +1,417 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+
+import { Link, useSearchParams } from "react-router-dom";
+
 import { useAlunoPortfolio } from "../hooks/useAlunoPortfolio";
 
-const GRADIENTS = [
-  "from-blue-500 to-blue-600",
-  "from-emerald-400 to-emerald-500",
-  "from-purple-500 to-purple-600",
-  "from-amber-400 to-orange-500",
-  "from-rose-400 to-red-500",
-  "from-cyan-400 to-blue-500",
-];
+const VISIBILIDADES = {
+  publico: {
+    label: "Público",
+    descricao: "Visível para empresas e usuários do Senac.",
+    classes: "border-emerald-100 bg-emerald-50 text-emerald-700",
+  },
+
+  apenas_senac: {
+    label: "Apenas Senac",
+    descricao: "Visível somente para alunos, professores e coordenação.",
+    classes: "border-blue-100 bg-blue-50 text-blue-700",
+  },
+
+  privado: {
+    label: "Privado",
+    descricao: "Visível somente para você.",
+    classes: "border-gray-200 bg-gray-50 text-gray-600",
+  },
+};
 
 export default function Portfolio() {
   const {
-    perfil, projetos, portfolios,
-    adicionarAoPortfolio, removerDoPortfolio, toggleVisibilidade
+    projetos,
+    portfolios,
+    loading,
+    erro,
+    processandoId,
+    adicionarAoPortfolio,
+    alterarVisibilidade,
+    removerDoPortfolio,
   } = useAlunoPortfolio();
-  
+
+  const [searchParams] = useSearchParams();
+
+  const projetoRecebido = searchParams.get("projeto");
+
   const [projetoId, setProjetoId] = useState("");
-  const [visibilidade, setVisibilidade] = useState("publico");
-  const [erro, setErro] = useState("");
-  const [sucesso, setSucesso] = useState("");
-  const [salvando, setSalvando] = useState(false);
+
+  const [visibilidade, setVisibilidade] = useState("privado");
+
   const [showForm, setShowForm] = useState(false);
 
-  const projetosDoAluno = projetos.filter(
-    (p) => perfil?.nome && p.aluno_responsavel?.toLowerCase().includes(perfil.nome.toLowerCase())
+  const [mensagem, setMensagem] = useState("");
+
+  const projetosDisponiveis = useMemo(() => {
+    const projetosNoPortfolio = new Set(
+      portfolios.map((portfolio) => portfolio.projeto_id),
+    );
+
+    return projetos.filter(
+      (projeto) =>
+        projeto.status === "aprovado" && !projetosNoPortfolio.has(projeto.id),
+    );
+  }, [projetos, portfolios]);
+
+  useEffect(() => {
+    if (!projetoRecebido || loading) {
+      return;
+    }
+
+    const projetoDisponivel = projetosDisponiveis.some(
+      (projeto) => projeto.id === Number(projetoRecebido),
+    );
+
+    if (projetoDisponivel) {
+      setProjetoId(projetoRecebido);
+      setShowForm(true);
+    }
+  }, [projetoRecebido, projetosDisponiveis, loading]);
+
+  const totais = useMemo(
+    () => ({
+      total: portfolios.length,
+
+      publicos: portfolios.filter(
+        (portfolio) => portfolio.visibilidade === "publico",
+      ).length,
+
+      apenasSenac: portfolios.filter(
+        (portfolio) => portfolio.visibilidade === "apenas_senac",
+      ).length,
+
+      privados: portfolios.filter(
+        (portfolio) => portfolio.visibilidade === "privado",
+      ).length,
+    }),
+    [portfolios],
   );
 
-  const meusPortfolios = portfolios.filter((p) => p.aluno_id === perfil?.id);
+  async function handleAdicionar(event) {
+    event.preventDefault();
+    setMensagem("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setErro(""); setSucesso("");
-    setSalvando(true);
-    try {
-      await adicionarAoPortfolio(projetoId, visibilidade);
-      setSucesso("Projeto adicionado ao portfólio!");
-      setProjetoId(""); setVisibilidade("publico");
-      setShowForm(false);
-    } catch (e) {
-      setErro(e.message || "Erro ao adicionar ao portfólio.");
-    } finally {
-      setSalvando(false);
+    const sucesso = await adicionarAoPortfolio(projetoId, visibilidade);
+
+    if (!sucesso) {
+      return;
     }
-  };
 
-  const handleRemover = async (id) => {
-    if (!window.confirm("Remover este projeto do portfólio?")) return;
-    try { await removerDoPortfolio(id); }
-    catch (e) { alert("Erro ao remover: " + e.message); }
-  };
+    setProjetoId("");
+    setVisibilidade("privado");
+    setShowForm(false);
 
-  const handleToggleVisibilidade = async (item) => {
-    try { await toggleVisibilidade(item); }
-    catch (e) { alert("Erro ao atualizar: " + e.message); }
-  };
+    setMensagem("Projeto adicionado ao portfólio com sucesso.");
+  }
 
-  const totalPublicos = meusPortfolios.filter(p => p.visibilidade === "publico").length;
-  const totalPrivados = meusPortfolios.filter(p => p.visibilidade === "privado").length;
+  async function handleVisibilidade(portfolioId, novaVisibilidade) {
+    setMensagem("");
+
+    const sucesso = await alterarVisibilidade(portfolioId, novaVisibilidade);
+
+    if (sucesso) {
+      setMensagem("Visibilidade atualizada com sucesso.");
+    }
+  }
+
+  async function handleRemover(portfolio) {
+    const confirmou = window.confirm(
+      `Deseja remover "${portfolio.titulo_projeto}" do portfólio?`,
+    );
+
+    if (!confirmou) {
+      return;
+    }
+
+    setMensagem("");
+
+    const sucesso = await removerDoPortfolio(portfolio.id);
+
+    if (sucesso) {
+      setMensagem("Projeto removido do portfólio.");
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-5xl">
+        <div className="rounded-3xl border border-gray-100 bg-white p-10 text-center shadow-sm">
+          <p className="text-sm text-gray-500">Carregando portfólio...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <section className="mx-auto flex max-w-5xl flex-col gap-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Meu Portfólio</h1>
-          <p className="mt-1 text-sm text-gray-500">Projetos publicados e disponíveis para visualização</p>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+            Meu portfólio
+          </h1>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Gerencie os projetos aprovados exibidos no seu portfólio.
+          </p>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            + Adicionar
-          </button>
-          <button
-            className="flex items-center gap-2 rounded-xl bg-[#f19f17] px-4 py-2 text-sm font-bold text-white hover:bg-amber-600 transition-colors"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-            Compartilhar Portfólio
-          </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setMensagem("");
+            setShowForm((estadoAtual) => !estadoAtual);
+          }}
+          className="rounded-xl bg-[#f19f17] px-5 py-3 text-sm font-bold text-white hover:bg-amber-600"
+        >
+          {showForm ? "Fechar formulário" : "Adicionar projeto"}
+        </button>
+      </header>
+
+      {erro && (
+        <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-medium text-red-600">
+          {erro}
+        </div>
+      )}
+
+      {mensagem && (
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-medium text-emerald-700">
+          {mensagem}
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 text-center shadow-sm">
+          <p className="text-2xl font-bold text-gray-900">{totais.total}</p>
+
+          <p className="mt-1 text-xs text-gray-500">Total</p>
+        </div>
+
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 text-center shadow-sm">
+          <p className="text-2xl font-bold text-emerald-700">
+            {totais.publicos}
+          </p>
+
+          <p className="mt-1 text-xs text-gray-500">Públicos</p>
+        </div>
+
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 text-center shadow-sm">
+          <p className="text-2xl font-bold text-blue-700">
+            {totais.apenasSenac}
+          </p>
+
+          <p className="mt-1 text-xs text-gray-500">Apenas Senac</p>
+        </div>
+
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 text-center shadow-sm">
+          <p className="text-2xl font-bold text-gray-700">{totais.privados}</p>
+
+          <p className="mt-1 text-xs text-gray-500">Privados</p>
         </div>
       </div>
 
-      {/* Métricas */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm text-center">
-          <p className="text-2xl font-bold text-gray-800">{meusPortfolios.length}</p>
-          <p className="text-xs text-gray-500 mt-1">Projetos Totais</p>
-        </div>
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm text-center">
-          <p className="text-2xl font-bold text-gray-800">{totalPublicos}</p>
-          <p className="text-xs text-gray-500 mt-1">Públicos</p>
-        </div>
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm text-center">
-          <p className="text-2xl font-bold text-gray-800">Ótimo</p>
-          <p className="text-xs text-gray-500 mt-1">Média Avaliativa</p>
-        </div>
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm text-center">
-          <p className="text-2xl font-bold text-gray-800">1.2k</p>
-          <p className="text-xs text-gray-500 mt-1">Visualizações</p>
-        </div>
-      </div>
-
-      {/* Formulário de adição (toggle) */}
       {showForm && (
-        <form onSubmit={handleSubmit} className="rounded-3xl border border-[#f19f17]/30 bg-amber-50 p-6 shadow-sm space-y-4">
-          <h2 className="text-sm font-bold text-amber-800 uppercase tracking-widest">Adicionar ao Portfólio</h2>
-          {erro && <p className="text-sm text-red-600">{erro}</p>}
-          {sucesso && <p className="text-sm text-emerald-700">{sucesso}</p>}
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Projeto</label>
-              <select value={projetoId} onChange={(e) => setProjetoId(e.target.value)} className="w-full rounded-xl border border-gray-200 p-3 text-sm outline-none focus:border-[#f19f17] bg-white" required>
-                <option value="">Selecione um projeto...</option>
-                {projetosDoAluno.map((p) => <option key={p.id} value={p.id}>{p.titulo}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Visibilidade</label>
-              <select value={visibilidade} onChange={(e) => setVisibilidade(e.target.value)} className="w-full rounded-xl border border-gray-200 p-3 text-sm outline-none focus:border-[#f19f17] bg-white">
-                <option value="privado">🔒 Apenas Senac</option>
-                <option value="publico">🌐 Público</option>
-              </select>
-            </div>
+        <form
+          onSubmit={handleAdicionar}
+          className="space-y-5 rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm"
+        >
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">
+              Adicionar projeto
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-600">
+              Somente projetos aprovados que ainda não estão no portfólio podem
+              ser adicionados.
+            </p>
           </div>
-          <div className="flex gap-3">
-            <button disabled={salvando} className="rounded-xl bg-[#f19f17] px-6 py-2.5 text-sm font-bold text-white disabled:opacity-50 hover:bg-amber-600">
-              {salvando ? "Salvando..." : "Salvar"}
-            </button>
-            <button type="button" onClick={() => setShowForm(false)} className="rounded-xl border border-gray-200 bg-white px-6 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50">
-              Cancelar
-            </button>
-          </div>
+
+          {projetosDisponiveis.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Projeto
+                  </label>
+
+                  <select
+                    value={projetoId}
+                    onChange={(event) => setProjetoId(event.target.value)}
+                    required
+                    className="w-full rounded-xl border border-gray-200 bg-white p-3 text-sm outline-none focus:border-[#f19f17]"
+                  >
+                    <option value="">Selecione um projeto</option>
+
+                    {projetosDisponiveis.map((projeto) => (
+                      <option key={projeto.id} value={projeto.id}>
+                        {projeto.titulo}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Visibilidade
+                  </label>
+
+                  <select
+                    value={visibilidade}
+                    onChange={(event) => setVisibilidade(event.target.value)}
+                    className="w-full rounded-xl border border-gray-200 bg-white p-3 text-sm outline-none focus:border-[#f19f17]"
+                  >
+                    <option value="privado">Privado</option>
+
+                    <option value="apenas_senac">Apenas Senac</option>
+
+                    <option value="publico">Público</option>
+                  </select>
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-600">
+                {VISIBILIDADES[visibilidade].descricao}
+              </p>
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="submit"
+                  disabled={processandoId === "adicionar"}
+                  className="rounded-xl bg-[#f19f17] px-6 py-2.5 text-sm font-bold text-white hover:bg-amber-600 disabled:opacity-50"
+                >
+                  {processandoId === "adicionar"
+                    ? "Adicionando..."
+                    : "Adicionar ao portfólio"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="rounded-xl border border-gray-200 bg-white px-6 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="rounded-2xl border border-amber-200 bg-white p-5">
+              <p className="text-sm text-gray-600">
+                Não existem projetos aprovados disponíveis para inclusão.
+              </p>
+
+              <Link
+                to="/aluno/projetos"
+                className="mt-3 inline-block text-sm font-bold text-[#f19f17] hover:underline"
+              >
+                Ver meus projetos
+              </Link>
+            </div>
+          )}
         </form>
       )}
 
-      {/* Header secundário "Todos os Projetos" com select Ordenar por */}
-      <div className="flex items-center justify-between mt-2">
-        <h2 className="text-sm font-bold text-gray-800">Todos os Projetos</h2>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">Ordenar por:</span>
-          <select className="border-none text-xs font-semibold text-gray-700 bg-transparent outline-none cursor-pointer">
-            <option>Mais recentes</option>
-            <option>Mais antigos</option>
-            <option>Melhor avaliados</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Grid de cards do portfólio */}
       <div>
-        {meusPortfolios.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {meusPortfolios.map((item, i) => {
-              const proj = projetos.find((p) => p.id === item.projeto_id);
-              const gradient = GRADIENTS[i % GRADIENTS.length];
+        <h2 className="mb-4 text-lg font-bold text-gray-900">
+          Projetos do portfólio
+        </h2>
+
+        {portfolios.length > 0 ? (
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            {portfolios.map((portfolio) => {
+              const configuracao =
+                VISIBILIDADES[portfolio.visibilidade] || VISIBILIDADES.privado;
+
               return (
-                <article key={item.id} className="rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow bg-white flex flex-col">
-                  {/* Card Header com gradiente */}
-                  <div className={`bg-gradient-to-br ${gradient} p-4 h-32 relative`}>
-                    <button onClick={() => handleRemover(item.id)} className="absolute top-4 right-4 text-white hover:text-red-200" title="Remover do portfólio">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="M15 9l-6 6"></path><path d="M9 9l6 6"></path></svg>
-                    </button>
-                  </div>
+                <article
+                  key={portfolio.id}
+                  className="flex flex-col rounded-3xl border border-gray-100 bg-white p-6 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <span
+                        className={`inline-block rounded-full border px-3 py-1 text-xs font-bold ${configuracao.classes}`}
+                      >
+                        {configuracao.label}
+                      </span>
 
-                  {/* Card Body */}
-                  <div className="p-6 flex flex-col flex-1">
-                    <h3 className="font-bold text-gray-900 text-sm leading-snug mb-3 line-clamp-2">
-                      {proj?.titulo || "Projeto sem título"}
-                    </h3>
-                    
+                      <h3 className="mt-4 text-lg font-bold text-gray-900">
+                        {portfolio.titulo_projeto}
+                      </h3>
+                    </div>
+
                     <button
-                      onClick={() => handleToggleVisibilidade(item)}
-                      className={`w-fit rounded-full px-2.5 py-1 text-[10px] font-bold border flex items-center gap-1 mb-3 hover:opacity-80 transition-opacity ${
-                        item.visibilidade === "publico"
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                          : "bg-blue-50 text-blue-600 border-blue-100"
-                      }`}
+                      type="button"
+                      onClick={() => handleRemover(portfolio)}
+                      disabled={processandoId === `remover-${portfolio.id}`}
+                      className="text-sm font-semibold text-red-500 hover:underline disabled:opacity-50"
                     >
-                      {item.visibilidade === "publico" ? (
-                        <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg> Público</>
-                      ) : (
-                        <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle><line x1="1" y1="1" x2="23" y2="23"></line></svg> Apenas Senac</>
-                      )}
+                      {processandoId === `remover-${portfolio.id}`
+                        ? "Removendo..."
+                        : "Remover"}
                     </button>
-
-                    <p className="text-xs text-gray-500 line-clamp-3 mb-4">
-                      {proj?.descricao || "Descrição do projeto não fornecida. Este texto é um placeholder..."}
-                    </p>
-
-                    <div className="flex flex-wrap gap-2 mb-4 mt-auto">
-                      <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-[10px] font-medium">React Native</span>
-                      <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-[10px] font-medium">Node.js</span>
-                      <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-[10px] font-medium">PostgreSQL</span>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
-                      <div className="flex items-center gap-2">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="M12 15v5s-2 2-2 4h4s0-2-2-4v-5"></path><path d="M7 6v2a5 5 0 1 0 10 0V6a5 5 0 0 0-10 0z"></path></svg>
-                        <span className="text-xs font-bold text-gray-700">9.5</span>
-                        <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">Excelente</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-gray-400">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                        <span className="text-xs">{Math.floor(Math.random() * 4) + 2} pessoas</span>
-                      </div>
-                    </div>
                   </div>
+
+                  <div className="mt-4 space-y-1 text-sm text-gray-500">
+                    <p>Curso: {portfolio.curso}</p>
+
+                    <p>Semestre: {portfolio.semestre}</p>
+                  </div>
+
+                  <div className="mt-6">
+                    <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-gray-400">
+                      Visibilidade
+                    </label>
+
+                    <select
+                      value={portfolio.visibilidade}
+                      onChange={(event) =>
+                        handleVisibilidade(portfolio.id, event.target.value)
+                      }
+                      disabled={
+                        processandoId === `visibilidade-${portfolio.id}`
+                      }
+                      className="w-full rounded-xl border border-gray-200 bg-white p-3 text-sm outline-none focus:border-[#f19f17] disabled:opacity-50"
+                    >
+                      <option value="privado">Privado</option>
+
+                      <option value="apenas_senac">Apenas Senac</option>
+
+                      <option value="publico">Público</option>
+                    </select>
+
+                    <p className="mt-2 text-xs text-gray-400">
+                      {configuracao.descricao}
+                    </p>
+                  </div>
+
+                  <Link
+                    to={`/aluno/projetos/${portfolio.projeto_id}`}
+                    className="mt-6 rounded-xl border border-gray-200 px-4 py-2.5 text-center text-sm font-bold text-gray-600 hover:border-[#f19f17] hover:text-[#f19f17]"
+                  >
+                    Visualizar projeto
+                  </Link>
                 </article>
               );
             })}
           </div>
         ) : (
-          <div className="rounded-3xl border border-dashed border-gray-200 bg-white p-16 text-center shadow-sm">
-            <div className="text-5xl mb-4">💼</div>
-            <h3 className="text-lg font-bold text-gray-700 mb-2">Portfólio vazio</h3>
-            <p className="text-sm text-gray-500 max-w-xs mx-auto mb-5">
-              Adicione seus projetos ao portfólio para que empresas possam encontrá-lo.
+          <div className="rounded-3xl border border-dashed border-gray-200 bg-white p-12 text-center shadow-sm">
+            <h3 className="text-lg font-bold text-gray-700">Portfólio vazio</h3>
+
+            <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">
+              Adicione um projeto aprovado para começar a montar seu portfólio.
             </p>
-            <button onClick={() => setShowForm(true)} className="rounded-xl bg-[#f19f17] px-6 py-2.5 text-sm font-bold text-white hover:bg-amber-600">
+
+            <button
+              type="button"
+              onClick={() => setShowForm(true)}
+              className="mt-5 rounded-xl bg-[#f19f17] px-6 py-2.5 text-sm font-bold text-white hover:bg-amber-600"
+            >
               Adicionar primeiro projeto
             </button>
           </div>

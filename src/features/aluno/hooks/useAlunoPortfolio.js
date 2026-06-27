@@ -1,65 +1,144 @@
-import { useState, useEffect, useCallback } from "react";
-import { getAlunoPerfil } from "../api/alunoApi";
+import { useCallback, useEffect, useState } from "react";
+
 import { getProjetos } from "../../../lib/projetosApi";
-import { getPortfolioList, createPortfolio, deletarPortfolio, updatePortfolio } from "../../../lib/portfolioApi";; // TODO: Extrair dps
+
+import {
+  createPortfolio,
+  deletarPortfolio,
+  getMeusPortfolios,
+  updatePortfolio,
+} from "../../../lib/portfolioApi";
 
 export function useAlunoPortfolio() {
-  const [perfil, setPerfil] = useState(null);
   const [projetos, setProjetos] = useState([]);
+
   const [portfolios, setPortfolios] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
-  const carregarDados = useCallback(async () => {
+  const [erro, setErro] = useState("");
+
+  const [processandoId, setProcessandoId] = useState(null);
+
+  const carregarDados = useCallback(async (mostrarLoading = true) => {
+    if (mostrarLoading) {
+      setLoading(true);
+    }
+
+    setErro("");
+
     try {
-      const [projRes, portRes] = await Promise.allSettled([
+      const [projetosData, portfoliosData] = await Promise.all([
         getProjetos(),
-        getPortfolioList()
+        getMeusPortfolios(),
       ]);
-      if (projRes.status === "fulfilled") setProjetos(Array.isArray(projRes.value) ? projRes.value : []);
-      if (portRes.status === "fulfilled") setPortfolios(Array.isArray(portRes.value) ? portRes.value : []);
-    } catch (e) {
-      console.error(e);
+
+      setProjetos(Array.isArray(projetosData) ? projetosData : []);
+
+      setPortfolios(Array.isArray(portfoliosData) ? portfoliosData : []);
+    } catch (error) {
+      setProjetos([]);
+      setPortfolios([]);
+
+      setErro(error.message || "Não foi possível carregar o portfólio.");
+    } finally {
+      if (mostrarLoading) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
-    async function init() {
-      try {
-        const p = await getAlunoPerfil();
-        setPerfil(p);
-      } catch (e) {
-        console.error(e);
-      }
-      await carregarDados();
-      setLoading(false);
-    }
-    init();
+    carregarDados();
   }, [carregarDados]);
 
-  const adicionarAoPortfolio = async (projetoId, visibilidade) => {
-    if (!perfil?.id) throw new Error("Perfil não carregado.");
-    await createPortfolio({ aluno_id: perfil.id, projeto_id: Number(projetoId), visibilidade });
-    await carregarDados();
-  };
+  async function adicionarAoPortfolio(projetoId, visibilidade) {
+    setProcessandoId("adicionar");
+    setErro("");
 
-  const removerDoPortfolio = async (id) => {
-    await deletarPortfolio(id);
-    await carregarDados();
-  };
+    try {
+      await createPortfolio({
+        projeto_id: Number(projetoId),
+        visibilidade,
+      });
 
-  const toggleVisibilidade = async (item) => {
-    const nova = item.visibilidade === "publico" ? "privado" : "publico";
-    await updatePortfolio(item.id, { visibilidade: nova });
-    await carregarDados();
-  };
+      await carregarDados(false);
+
+      return true;
+    } catch (error) {
+      setErro(
+        error.message || "Não foi possível adicionar o projeto ao portfólio.",
+      );
+
+      return false;
+    } finally {
+      setProcessandoId(null);
+    }
+  }
+
+  async function alterarVisibilidade(portfolioId, visibilidade) {
+    setProcessandoId(`visibilidade-${portfolioId}`);
+
+    setErro("");
+
+    try {
+      await updatePortfolio(portfolioId, {
+        visibilidade,
+      });
+
+      setPortfolios((portfoliosAtuais) =>
+        portfoliosAtuais.map((portfolio) =>
+          portfolio.id === portfolioId
+            ? {
+                ...portfolio,
+                visibilidade,
+              }
+            : portfolio,
+        ),
+      );
+
+      return true;
+    } catch (error) {
+      setErro(error.message || "Não foi possível alterar a visibilidade.");
+
+      return false;
+    } finally {
+      setProcessandoId(null);
+    }
+  }
+
+  async function removerDoPortfolio(portfolioId) {
+    setProcessandoId(`remover-${portfolioId}`);
+
+    setErro("");
+
+    try {
+      await deletarPortfolio(portfolioId);
+
+      setPortfolios((portfoliosAtuais) =>
+        portfoliosAtuais.filter((portfolio) => portfolio.id !== portfolioId),
+      );
+
+      return true;
+    } catch (error) {
+      setErro(
+        error.message || "Não foi possível remover o projeto do portfólio.",
+      );
+
+      return false;
+    } finally {
+      setProcessandoId(null);
+    }
+  }
 
   return {
-    perfil,
     projetos,
     portfolios,
     loading,
+    erro,
+    processandoId,
     adicionarAoPortfolio,
+    alterarVisibilidade,
     removerDoPortfolio,
-    toggleVisibilidade
   };
 }

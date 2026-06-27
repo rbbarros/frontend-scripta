@@ -207,12 +207,21 @@ export default function MeusProjetos() {
                         : "Visualizar projeto"}
                     </Link>
 
+                    {projeto.status === "aprovado" && (
+                      <Link
+                        to={`/aluno/portfolio?projeto=${projeto.id}`}
+                        className="rounded-xl bg-[#f19f17] px-5 py-2.5 text-center text-sm font-semibold text-white hover:bg-[#d98b14]"
+                      >
+                        Adicionar ao portfólio
+                      </Link>
+                    )}
+
                     {projeto.status === "rascunho" && (
                       <button
                         type="button"
                         onClick={() => handleSubmeter(projeto)}
                         disabled={submetendoId === projeto.id}
-                        className="rounded-xl bg-[#f19f17] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#d98b14] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-xl bg-[#f19f17] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#d98b14] disabled:opacity-50"
                       >
                         {submetendoId === projeto.id
                           ? "Submetendo..."

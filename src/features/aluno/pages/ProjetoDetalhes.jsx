@@ -187,8 +187,21 @@ export default function ProjetoDetalhes() {
         </div>
 
         {!podeEditar && (
-          <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
-            Este projeto está disponível somente para visualização.
+          <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50 p-4">
+            <p className="text-sm text-gray-600">
+              {projeto.status === "aprovado"
+                ? "Este projeto foi aprovado e não pode mais ser editado. Você pode adicioná-lo ao seu portfólio."
+                : "Este projeto está disponível somente para visualização."}
+            </p>
+
+            {projeto.status === "aprovado" && (
+              <Link
+                to={`/aluno/portfolio?projeto=${projeto.id}`}
+                className="mt-4 inline-block rounded-xl bg-[#f19f17] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#d98b14]"
+              >
+                Adicionar ao portfólio
+              </Link>
+            )}
           </div>
         )}
 
