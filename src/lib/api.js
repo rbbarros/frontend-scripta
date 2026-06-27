@@ -47,8 +47,43 @@ function getErrorMessage(data, fallbackMessage) {
   return fallbackMessage || "Não foi possível concluir a requisição.";
 }
 
+function montarUrl(path, params) {
+  const url = new URL(`${API_BASE_URL}${path}`);
+
+  if (!params) {
+    return url.toString();
+  }
+
+  Object.entries(params).forEach(([chave, valor]) => {
+    if (valor !== undefined && valor !== null && valor !== "") {
+      url.searchParams.set(chave, String(valor));
+    }
+  });
+
+  return url.toString();
+}
+
+async function lerErro(response) {
+  const contentType = response.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    return response.json().catch(() => null);
+  }
+
+  const texto = await response.text().catch(() => "");
+
+  return texto ? { detail: texto } : null;
+}
+
 export async function apiRequest(path, options = {}) {
-  const { method = "GET", body, headers = {}, ...rest } = options;
+  const {
+    method = "GET",
+    body,
+    headers = {},
+    params,
+    responseType = "json",
+    ...rest
+  } = options;
 
   const token = localStorage.getItem("scripta_token");
 
@@ -58,22 +93,50 @@ export async function apiRequest(path, options = {}) {
       }
     : {};
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const isFormData =
+    typeof FormData !== "undefined" && body instanceof FormData;
+
+  const bodyHeaders =
+    body != null && !isFormData
+      ? {
+          "Content-Type": "application/json",
+        }
+      : {};
+
+  const response = await fetch(montarUrl(path, params), {
     method,
     headers: {
-      "Content-Type": "application/json",
+      ...bodyHeaders,
       ...authHeaders,
       ...headers,
     },
-    body: body != null ? JSON.stringify(body) : undefined,
+    body: body == null ? undefined : isFormData ? body : JSON.stringify(body),
     ...rest,
   });
 
-  const data = await response.json().catch(() => null);
-
   if (!response.ok) {
+    const data = await lerErro(response);
+
     throw new Error(getErrorMessage(data, response.statusText));
   }
 
-  return data;
+  if (response.status === 204) {
+    return null;
+  }
+
+  if (responseType === "blob") {
+    return response.blob();
+  }
+
+  if (responseType === "text") {
+    return response.text();
+  }
+
+  const contentType = response.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    return response.json().catch(() => null);
+  }
+
+  return response.text();
 }
