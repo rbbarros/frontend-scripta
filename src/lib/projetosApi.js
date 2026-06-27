@@ -57,6 +57,26 @@ export async function getArquivosDoProjeto(projetoId) {
   return apiRequest(`/arquivos/projeto/${projetoId}`);
 }
 
+export async function createArquivoMetadata(data) {
+  return apiRequest("/arquivos/metadados", {
+    method: "POST",
+    body: data,
+  });
+}
+
+export async function updateArquivoMetadata(arquivoId, data) {
+  return apiRequest(`/arquivos/${arquivoId}`, {
+    method: "PUT",
+    body: data,
+  });
+}
+
+export async function deleteArquivoMetadata(arquivoId) {
+  return apiRequest(`/arquivos/${arquivoId}`, {
+    method: "DELETE",
+  });
+}
+
 // ─── INTEGRANTES DE PROJETO ────────────────────────────────────────────────────
 
 export async function getIntegrantesDoProjeto(projetoId) {
@@ -67,5 +87,11 @@ export async function addIntegranteAoProjeto(projetoId, data) {
   return apiRequest(`/projetos/${projetoId}/integrantes/`, {
     method: "POST",
     body: data,
+  });
+}
+
+export async function removeIntegranteDoProjeto(projetoId, alunoId) {
+  return apiRequest(`/projetos/${projetoId}/integrantes/${alunoId}`, {
+    method: "DELETE",
   });
 }
