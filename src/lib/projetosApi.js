@@ -1,9 +1,13 @@
 import { apiRequest } from "./api";
 
-// ─── PROJETOS ──────────────────────────────────────────────────────────────────
+// PROJETOS
 
 export async function getProjetos() {
   return apiRequest("/projetos/");
+}
+
+export async function getProjetosExploraveis() {
+  return apiRequest("/projetos/explorar");
 }
 
 export async function getProjetoPorId(id) {
@@ -77,7 +81,7 @@ export async function deleteArquivoMetadata(arquivoId) {
   });
 }
 
-// ─── INTEGRANTES DE PROJETO ────────────────────────────────────────────────────
+// INTEGRANTES DE PROJETO
 
 export async function getIntegrantesDoProjeto(projetoId) {
   return apiRequest(`/projetos/${projetoId}/integrantes/`);
