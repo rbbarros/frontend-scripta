@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAlunoDashboard } from "../hooks/useAlunoDashboard";
 
@@ -35,7 +35,68 @@ function getStatusConfig(status) {
 }
 
 export default function Perfil() {
-  const { perfil, projetos, erro, loading } = useAlunoDashboard();
+  const { perfil, projetos, erro, loading, salvandoPerfil, salvarPerfil } =
+    useAlunoDashboard();
+
+  const [editando, setEditando] = useState(false);
+
+  const [mensagem, setMensagem] = useState("");
+
+  const [formData, setFormData] = useState({
+    github_url: "",
+    linkedin_url: "",
+    competencias: "",
+  });
+
+  useEffect(() => {
+    if (!perfil) {
+      return;
+    }
+
+    setFormData({
+      github_url: perfil.github_url || "",
+      linkedin_url: perfil.linkedin_url || "",
+      competencias: perfil.competencias || "",
+    });
+  }, [perfil]);
+
+  function atualizarCampo(campo, valor) {
+    setFormData((dadosAtuais) => ({
+      ...dadosAtuais,
+      [campo]: valor,
+    }));
+  }
+
+  async function handleSalvarPerfil(event) {
+    event.preventDefault();
+    setMensagem("");
+
+    const githubUrl = formData.github_url.trim();
+
+    const linkedinUrl = formData.linkedin_url.trim();
+
+    if (githubUrl && !/^https?:\/\//i.test(githubUrl)) {
+      setMensagem("O link do GitHub deve começar com http:// ou https://.");
+      return;
+    }
+
+    if (linkedinUrl && !/^https?:\/\//i.test(linkedinUrl)) {
+      setMensagem("O link do LinkedIn deve começar com http:// ou https://.");
+      return;
+    }
+
+    const sucesso = await salvarPerfil({
+      github_url: githubUrl || null,
+      linkedin_url: linkedinUrl || null,
+      competencias: formData.competencias.trim() || null,
+    });
+
+    if (sucesso) {
+      setMensagem("Perfil atualizado com sucesso.");
+
+      setEditando(false);
+    }
+  }
 
   /*
    * O backend já deve devolver somente os projetos
@@ -57,7 +118,7 @@ export default function Perfil() {
     );
   }
 
-  if (erro || !perfil) {
+  if (!perfil) {
     return (
       <div className="max-w-6xl mx-auto">
         <div className="bg-red-50 rounded-3xl border border-red-100 p-8">
@@ -75,73 +136,172 @@ export default function Perfil() {
 
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-6">
-      <section className="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm">
-        <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-          <div className="w-24 h-24 bg-[#f19f17] rounded-full flex items-center justify-center text-white text-4xl font-bold shadow-sm shrink-0">
-            {perfil.nome?.charAt(0).toUpperCase()}
-          </div>
-
-          <div className="text-center md:text-left">
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-              {perfil.nome}
-            </h1>
-
-            <p className="mt-2 text-sm text-gray-600">
-              {perfil.curso}
-
-              {perfil.turma ? ` • Turma ${perfil.turma}` : ""}
-
-              {perfil.semestre_ingresso
-                ? ` • Ingresso ${perfil.semestre_ingresso}`
-                : ""}
-            </p>
-
-            {perfil.matricula && (
-              <p className="mt-1 text-xs text-gray-500">
-                Matrícula: {perfil.matricula}
-              </p>
-            )}
-
-            <div className="mt-4 flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm">
-              <a
-                href={`mailto:${perfil.email}`}
-                className="text-gray-500 hover:text-[#f19f17]"
-              >
-                {perfil.email}
-              </a>
-
-              {perfil.github_url && (
-                <a
-                  href={perfil.github_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-semibold text-gray-600 hover:text-[#f19f17]"
-                >
-                  GitHub
-                </a>
-              )}
-
-              {perfil.linkedin_url && (
-                <a
-                  href={perfil.linkedin_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-semibold text-gray-600 hover:text-[#f19f17]"
-                >
-                  LinkedIn
-                </a>
-              )}
+      <section className="rounded-[2rem] border border-gray-100 bg-white p-8 shadow-sm">
+        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-start">
+          <div className="flex flex-col items-center gap-6 md:flex-row md:items-start">
+            <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-[#f19f17] text-4xl font-bold text-white shadow-sm">
+              {perfil.nome?.charAt(0).toUpperCase()}
             </div>
 
-            {perfil.competencias && (
-              <p className="mt-4 max-w-2xl text-sm text-gray-500">
-                <strong className="text-gray-700">Competências:</strong>{" "}
-                {perfil.competencias}
+            <div className="text-center md:text-left">
+              <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+                {perfil.nome}
+              </h1>
+
+              <p className="mt-2 text-sm text-gray-600">
+                {perfil.curso}
+
+                {perfil.turma ? ` • Turma ${perfil.turma}` : ""}
+
+                {perfil.semestre_ingresso
+                  ? ` • Ingresso ${perfil.semestre_ingresso}`
+                  : ""}
               </p>
-            )}
+
+              {perfil.matricula && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Matrícula: {perfil.matricula}
+                </p>
+              )}
+
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-sm md:justify-start">
+                <a
+                  href={`mailto:${perfil.email}`}
+                  className="text-gray-500 hover:text-[#f19f17]"
+                >
+                  {perfil.email}
+                </a>
+
+                {perfil.github_url && (
+                  <a
+                    href={perfil.github_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-gray-600 hover:text-[#f19f17]"
+                  >
+                    GitHub
+                  </a>
+                )}
+
+                {perfil.linkedin_url && (
+                  <a
+                    href={perfil.linkedin_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-gray-600 hover:text-[#f19f17]"
+                  >
+                    LinkedIn
+                  </a>
+                )}
+              </div>
+
+              {perfil.competencias && (
+                <p className="mt-4 max-w-2xl text-sm text-gray-500">
+                  <strong className="text-gray-700">Competências:</strong>{" "}
+                  {perfil.competencias}
+                </p>
+              )}
+            </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setMensagem("");
+              setEditando((estadoAtual) => !estadoAtual);
+            }}
+            className="shrink-0 rounded-xl border border-[#f19f17] px-5 py-2.5 text-sm font-semibold text-[#f19f17] hover:bg-amber-50"
+          >
+            {editando ? "Cancelar edição" : "Editar perfil"}
+          </button>
         </div>
       </section>
+
+      {editando && (
+        <form
+          onSubmit={handleSalvarPerfil}
+          className="rounded-3xl border border-gray-100 bg-white p-8 shadow-sm"
+        >
+          <h2 className="text-xl font-bold text-gray-900">
+            Editar perfil profissional
+          </h2>
+
+          <p className="mt-2 text-sm text-gray-500">
+            Atualize os links profissionais e suas principais competências.
+          </p>
+
+          <div className="mt-6 space-y-5">
+            <div>
+              <label className="mb-2 block text-sm font-bold text-gray-700">
+                GitHub
+              </label>
+
+              <input
+                type="url"
+                value={formData.github_url}
+                onChange={(event) =>
+                  atualizarCampo("github_url", event.target.value)
+                }
+                placeholder="https://github.com/seu-usuario"
+                className="w-full rounded-xl border border-gray-200 p-4 text-sm outline-none focus:border-[#f19f17]"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-bold text-gray-700">
+                LinkedIn
+              </label>
+
+              <input
+                type="url"
+                value={formData.linkedin_url}
+                onChange={(event) =>
+                  atualizarCampo("linkedin_url", event.target.value)
+                }
+                placeholder="https://linkedin.com/in/seu-usuario"
+                className="w-full rounded-xl border border-gray-200 p-4 text-sm outline-none focus:border-[#f19f17]"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-bold text-gray-700">
+                Competências
+              </label>
+
+              <textarea
+                value={formData.competencias}
+                onChange={(event) =>
+                  atualizarCampo("competencias", event.target.value)
+                }
+                rows={4}
+                placeholder="Ex.: Python, FastAPI, React, MySQL e gestão de projetos"
+                className="w-full resize-none rounded-xl border border-gray-200 p-4 text-sm outline-none focus:border-[#f19f17]"
+              />
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <button
+              type="submit"
+              disabled={salvandoPerfil}
+              className="rounded-xl bg-[#f19f17] px-6 py-3 text-sm font-semibold text-white hover:bg-[#d98b14] disabled:opacity-50"
+            >
+              {salvandoPerfil ? "Salvando..." : "Salvar alterações"}
+            </button>
+          </div>
+        </form>
+      )}
+      {mensagem && (
+        <div
+          className={`rounded-2xl border p-4 text-sm font-medium ${
+            mensagem.includes("sucesso")
+              ? "border-emerald-100 bg-emerald-50 text-emerald-700"
+              : "border-red-100 bg-red-50 text-red-600"
+          }`}
+        >
+          {mensagem}
+        </div>
+      )}
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-[2rem] border border-gray-100 p-6 text-center shadow-sm">
@@ -173,7 +333,7 @@ export default function Perfil() {
             <nav className="space-y-1">
               <Link
                 to="/aluno/projetos"
-                className="block px-4 py-2.5 rounded-xl text-sm font-bold text-[#f19f17] bg-amber-50"
+                className="block rounded-xl bg-amber-50 px-4 py-2.5 text-sm font-bold text-[#f19f17]"
               >
                 Meus projetos
               </Link>
@@ -244,7 +404,7 @@ export default function Perfil() {
                     </div>
 
                     <Link
-                      to="/aluno/projetos"
+                      to={`/aluno/projetos/${projeto.id}`}
                       className="text-sm font-bold text-gray-400 hover:text-[#f19f17]"
                     >
                       Ver detalhes
