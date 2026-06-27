@@ -1,141 +1,339 @@
-import React, { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+
+import {
+  Award,
+  BriefcaseBusiness,
+  CheckCircle2,
+  Clock3,
+  FileCheck2,
+  FolderKanban,
+  Search,
+  Trophy,
+  Upload,
+  UserRound,
+  XCircle,
+} from "lucide-react";
+
 import { Link, useNavigate } from "react-router-dom";
+
 import { useAlunoDashboard } from "../hooks/useAlunoDashboard";
+
+function formatarMedia(valor) {
+  const numero = Number(valor);
+
+  return Number.isFinite(numero) ? numero.toFixed(2) : "—";
+}
+
+function CardAtalho({ to, titulo, descricao, icon: Icone, iconClasses }) {
+  return (
+    <Link
+      to={to}
+      className="block rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm transition-all hover:border-orange-200 hover:shadow-md"
+    >
+      <div
+        className={`mb-4 flex h-12 w-full items-center rounded-xl pl-3 text-white shadow-sm ${iconClasses}`}
+      >
+        <Icone size={24} />
+      </div>
+
+      <h3 className="mb-1 text-sm font-bold text-gray-800">{titulo}</h3>
+
+      <p className="text-xs text-gray-400">{descricao}</p>
+    </Link>
+  );
+}
+
+function ItemResumo({ label, quantidade, icon: Icone, classes }) {
+  return (
+    <div className="flex items-center justify-between rounded-xl border border-gray-100 p-3">
+      <div className="flex items-center gap-3">
+        <div className={`rounded-lg p-2 ${classes}`}>
+          <Icone size={16} />
+        </div>
+
+        <span className="text-sm font-medium text-gray-700">{label}</span>
+      </div>
+
+      <strong className="text-gray-900">{quantidade}</strong>
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { perfil, projetos, erro, loading } = useAlunoDashboard();
+
+  const { perfil, projetos, destaques, erro, loading } = useAlunoDashboard();
 
   useEffect(() => {
-    if (erro === "Não autenticado" || erro === "Não foi possível carregar seu perfil.") {
+    if (
+      erro === "Não autenticado" ||
+      erro === "Não foi possível carregar seu perfil."
+    ) {
       localStorage.removeItem("scripta_token");
+
       localStorage.removeItem("scripta_user_type");
+
       navigate("/");
     }
   }, [erro, navigate]);
 
-  // Simulando top projetos e notas
-  const projetosEmDestaque = [
-    { id: 1, titulo: "Sistema de IA para Diagnóstico Médico", curso: "Engenharia de Software", tempo: "2 dias atrás", nota: "9.8" },
-    { id: 2, titulo: "Plataforma de Blockchain para Certificados", curso: "Ciência da Computação", tempo: "5 dias atrás", nota: "9.6" },
-    { id: 3, titulo: "App de Realidade Aumentada Educacional", curso: "Sistemas de Informação", tempo: "1 semana atrás", nota: "9.5" }
-  ];
+  const resumo = useMemo(
+    () => ({
+      rascunho: projetos.filter((projeto) => projeto.status === "rascunho")
+        .length,
 
-  console.log(perfil)
+      submetido: projetos.filter((projeto) => projeto.status === "submetido")
+        .length,
+
+      emAvaliacao: projetos.filter(
+        (projeto) => projeto.status === "em_avaliacao",
+      ).length,
+
+      aprovado: projetos.filter((projeto) => projeto.status === "aprovado")
+        .length,
+
+      reprovado: projetos.filter((projeto) => projeto.status === "reprovado")
+        .length,
+    }),
+    [projetos],
+  );
 
   return (
-    <>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-          {loading ? "Carregando..." : perfil?.nome ? `Olá, ${perfil.nome}` : "Bem-vindo ao Scripta"}
+    <div className="pb-12">
+      <header className="mb-8">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+          {loading
+            ? "Carregando..."
+            : perfil?.nome
+              ? `Olá, ${perfil.nome}`
+              : "Bem-vindo ao Scripta"}
         </h1>
-        <p className="text-sm text-gray-500 mt-1">
-          {erro || "Acesse rapidamente suas funcionalidades principais"}
+
+        <p className="mt-1 text-sm text-gray-500">
+          {erro || "Acesse rapidamente suas funcionalidades principais."}
         </p>
-      </div>
+      </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Link to="/aluno/submeter" className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow block text-left">
-          <div className="w-full h-12 bg-blue-600 rounded-xl flex items-center justify-start pl-3 text-white text-xl mb-4 shadow-sm">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-          </div>
-          <h3 className="font-bold text-gray-800 text-sm mb-1">Submeter Projetos</h3>
-          <p className="text-xs text-gray-400">Envie seu novo projeto integrador</p>
-        </Link>
+      <section className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <CardAtalho
+          to="/aluno/submeter"
+          titulo="Submeter projeto"
+          descricao="Cadastre um novo Projeto Integrador."
+          icon={Upload}
+          iconClasses="bg-blue-600"
+        />
 
-        <Link to="/aluno/buscar" className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow block text-left">
-          <div className="justify-start pl-3 w-full h-12 bg-emerald-500 rounded-xl flex items-center justify-center text-white text-xl mb-4 shadow-sm">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          </div>
-          <h3 className="font-bold text-gray-800 text-sm mb-1">Buscar Projetos</h3>
-          <p className="text-xs text-gray-400">Explore projetos de outros alunos</p>
-        </Link>
+        <CardAtalho
+          to="/aluno/buscar"
+          titulo="Buscar projetos"
+          descricao="Explore projetos disponíveis na plataforma."
+          icon={Search}
+          iconClasses="bg-emerald-500"
+        />
 
-        <Link to="/aluno/ranking" className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow block text-left">
-          <div className="justify-start pl-3 w-full h-12 bg-amber-500 rounded-xl flex items-center justify-center text-white text-xl mb-4 shadow-sm">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
-          </div>
-          <h3 className="font-bold text-gray-800 text-sm mb-1">Ver Ranking</h3>
-          <p className="text-xs text-gray-400">Confira os melhores projetos</p>
-        </Link>
+        <CardAtalho
+          to="/aluno/ranking"
+          titulo="Ver ranking"
+          descricao="Confira os projetos mais bem avaliados."
+          icon={Trophy}
+          iconClasses="bg-amber-500"
+        />
 
-        <Link to="/aluno/portfolio" className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow block text-left">
-          <div className="justify-start pl-3 w-full h-12 bg-purple-500 rounded-xl flex items-center justify-center text-white text-xl mb-4 shadow-sm">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
-          </div>
-          <h3 className="font-bold text-gray-800 text-sm mb-1">Meu Portfólio</h3>
-          <p className="text-xs text-gray-400">Gerencie seus projetos publicados</p>
-        </Link>
-      </div>
+        <CardAtalho
+          to="/aluno/portfolio"
+          titulo="Meu portfólio"
+          descricao="Gerencie seus projetos publicados."
+          icon={BriefcaseBusiness}
+          iconClasses="bg-purple-500"
+        />
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-4 boder-gray-100 rounded-2xl shadow-sm bg-white p-6">
-          <div className="flex items-center justify-between pb-3">
-            <h2 className="text-xl font-bold text-gray-800">Projetos em Destaque</h2>
-            <Link to="/aluno/buscar" className="text-sm font-semibold text-gray-500 hover:text-gray-800 flex items-center gap-1">Ver todos <span>→</span></Link>
-          </div>
-          <div className="space-y-3">
-            {projetosEmDestaque.map((projeto) => (
-              <div key={projeto.id} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm flex items-center justify-between gap-4">
-                <div>
-                  <h4 className="font-semibold text-gray-800 text-sm mb-1">{projeto.titulo}</h4>
-                  <span className="text-xs text-gray-500">{projeto.curso} • {projeto.tempo}</span>
-                </div>
-                <div className="bg-amber-50 text-[#c67c00] px-3 py-1 rounded-full text-xs font-bold border border-amber-100 flex items-center gap-1">
-                  <i class="fas fa-trophy"></i> {projeto.nota}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        { /* notificações */ }
-        <div className="space-y-6">
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-            <h3 className="text-xl font-bold text-gray-800 pb-3 mb-4">Notificações</h3>
-            <div className="space-y-4">
-              <div className="flex flex-col gap-1">
-                <span className="text-sm text-gray-800">Novo projeto avaliado</span>
-                <span className="text-xs text-gray-400">Há 2 horas</span>
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-sm text-gray-800">Empresa visualizou seu portfólio</span>
-                <span className="text-xs text-gray-400">Há 5 horas</span>
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-sm text-gray-800">Certificado disponível</span>
-                <span className="text-xs text-gray-400">Ontem</span>
-              </div>
+      <section className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <article className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm lg:col-span-2">
+          <header className="mb-5 flex items-center justify-between gap-4">
+            <div>
+              <h2 className="flex items-center gap-2 text-xl font-bold text-gray-800">
+                <Trophy size={21} className="text-[#f19f17]" />
+                Projetos em destaque
+              </h2>
+
+              <p className="mt-1 text-xs text-gray-500">
+                Projetos aprovados com as maiores médias de avaliação.
+              </p>
             </div>
-          </div>
 
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-            <h3 className="text-xl font-bold text-gray-800 pb-3 mb-4">Ações Rápidas</h3>
-            <div className="space-y-2">
-              <button 
-                onClick={() => navigate('/aluno/submeter')}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-[#f19f17] text-[#f19f17] font-bold hover:bg-amber-50 transition-colors"
+            <Link
+              to="/aluno/ranking"
+              className="shrink-0 text-sm font-semibold text-gray-500 hover:text-[#f19f17]"
+            >
+              Ver ranking →
+            </Link>
+          </header>
+
+          {loading ? (
+            <div className="py-12 text-center text-sm text-gray-500">
+              Carregando projetos...
+            </div>
+          ) : destaques.length > 0 ? (
+            <div className="space-y-3">
+              {destaques.map((projeto) => (
+                <div
+                  key={projeto.projeto_id}
+                  className="flex flex-col justify-between gap-4 rounded-2xl border border-gray-100 p-5 transition-colors hover:border-orange-200 sm:flex-row sm:items-center"
+                >
+                  <div className="min-w-0">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-orange-50 text-xs font-bold text-[#f19f17]">
+                        {projeto.posicao}º
+                      </span>
+
+                      <h3 className="truncate text-sm font-bold text-gray-800">
+                        {projeto.titulo}
+                      </h3>
+                    </div>
+
+                    <p className="text-xs text-gray-500">
+                      {projeto.curso} • {projeto.turma} • {projeto.semestre}
+                    </p>
+
+                    <p className="mt-1 text-xs text-gray-400">
+                      Responsável: {projeto.aluno_responsavel}
+                    </p>
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-5">
+                    <div className="text-center">
+                      <strong className="block text-lg text-[#f19f17]">
+                        {formatarMedia(projeto.media_geral)}
+                      </strong>
+
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                        Média
+                      </span>
+                    </div>
+
+                    <div className="text-center">
+                      <strong className="block text-lg text-gray-800">
+                        {projeto.total_avaliacoes}
+                      </strong>
+
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                        Avaliações
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-gray-200 py-12 text-center">
+              <Trophy size={38} className="mx-auto text-gray-300" />
+
+              <p className="mt-4 text-sm font-semibold text-gray-600">
+                Nenhum projeto em destaque disponível.
+              </p>
+
+              <p className="mt-1 text-xs text-gray-400">
+                Os destaques aparecem após projetos serem avaliados e aprovados.
+              </p>
+            </div>
+          )}
+        </article>
+
+        <div className="space-y-6">
+          <article className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+            <header className="mb-5">
+              <h2 className="flex items-center gap-2 text-xl font-bold text-gray-800">
+                <FolderKanban size={21} className="text-[#f19f17]" />
+                Meus projetos
+              </h2>
+
+              <p className="mt-1 text-xs text-gray-500">
+                Resumo por situação atual.
+              </p>
+            </header>
+
+            <div className="space-y-3">
+              <ItemResumo
+                label="Rascunhos"
+                quantidade={resumo.rascunho}
+                icon={FolderKanban}
+                classes="bg-gray-100 text-gray-600"
+              />
+
+              <ItemResumo
+                label="Submetidos"
+                quantidade={resumo.submetido}
+                icon={Clock3}
+                classes="bg-blue-50 text-blue-600"
+              />
+
+              <ItemResumo
+                label="Em avaliação"
+                quantidade={resumo.emAvaliacao}
+                icon={FileCheck2}
+                classes="bg-purple-50 text-purple-600"
+              />
+
+              <ItemResumo
+                label="Aprovados"
+                quantidade={resumo.aprovado}
+                icon={CheckCircle2}
+                classes="bg-emerald-50 text-emerald-600"
+              />
+
+              <ItemResumo
+                label="Reprovados"
+                quantidade={resumo.reprovado}
+                icon={XCircle}
+                classes="bg-red-50 text-red-600"
+              />
+            </div>
+
+            <Link
+              to="/aluno/projetos"
+              className="mt-5 block rounded-xl border border-gray-200 px-4 py-2.5 text-center text-sm font-bold text-gray-700 hover:bg-gray-50"
+            >
+              Ver meus projetos
+            </Link>
+          </article>
+
+          <article className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-xl font-bold text-gray-800">
+              Ações rápidas
+            </h2>
+
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => navigate("/aluno/submeter")}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#f19f17] px-4 py-3 font-bold text-[#f19f17] transition-colors hover:bg-orange-50"
               >
-                <i class="fas fa-upload"></i>
-                Enviar nova submissão
+                <Upload size={18} />
+                Nova submissão
               </button>
-              <button 
-                onClick={() => navigate('/aluno/certificados')}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-[#f19f17] text-[#f19f17] font-bold hover:bg-amber-50 transition-colors"
+
+              <button
+                type="button"
+                onClick={() => navigate("/aluno/certificados")}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#f19f17] px-4 py-3 font-bold text-[#f19f17] transition-colors hover:bg-orange-50"
               >
-                <i class="fas fa-award"></i>
+                <Award size={18} />
                 Certificados
               </button>
-              <button 
-                onClick={() => navigate(`/aluno/perfil`)}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-[#f19f17] text-[#f19f17] font-bold hover:bg-amber-50 transition-colors"
+
+              <button
+                type="button"
+                onClick={() => navigate("/aluno/perfil")}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#f19f17] px-4 py-3 font-bold text-[#f19f17] transition-colors hover:bg-orange-50"
               >
-                <i class="fas fa-user-friends"></i>
-                Meu Perfil
+                <UserRound size={18} />
+                Meu perfil
               </button>
             </div>
-          </div>
+          </article>
         </div>
-      </div>
-    </>
+      </section>
+    </div>
   );
 }

@@ -1,193 +1,427 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { getProjetos } from "../../../lib/projetosApi";;
+import { useMemo, useState } from "react";
 
-export default function Ranking() {
-  const navigate = useNavigate();
-  const [projetos, setProjetos] = useState([]);
-  
-  // Filtros (Visuais para compor o layout do Figma)
-  const [periodo, setPeriodo] = useState("");
-  const [curso, setCurso] = useState("");
-  const [area, setArea] = useState("");
+import {
+  AlertTriangle,
+  BarChart3,
+  Filter,
+  LoaderCircle,
+  Medal,
+  RefreshCw,
+  Trophy,
+} from "lucide-react";
 
-  useEffect(() => {
-    if (!localStorage.getItem("scripta_token")) {
-      navigate("/");
-      return;
-    }
+import { useAlunoRanking } from "../hooks/useAlunoRanking";
 
-    getProjetos().then(setProjetos).catch(() => setProjetos([]));
-  }, [navigate]);
+const FILTROS_INICIAIS = {
+  curso: "",
+  turma: "",
+  semestre: "",
+};
 
-  const ranking = useMemo(() => {
-    // Adicionando mocks de notas para exibir no Ranking, já que o backend atual não fornece notas exatas
-    const projetosComNota = projetos.map(p => {
-      // Mock properties
-      const nota = p.nota || parseFloat((Math.random() * (10 - 8) + 8).toFixed(1));
-      const avaliacoes = Math.floor(Math.random() * 20) + 5;
-      const projCurso = p.curso || "Engenharia de Software";
-      
-      return { ...p, _nota: nota, _avaliacoes: avaliacoes, _curso: projCurso };
-    });
+const selectClasses =
+  "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition-colors focus:border-[#f19f17] focus:ring-2 focus:ring-orange-100";
 
-    // Ordenar pela nota (maior para menor)
-    return projetosComNota.sort((a, b) => b._nota - a._nota);
-  }, [projetos]);
+function formatarMedia(valor) {
+  const numero = Number(valor);
 
-  // Pegamos os 3 primeiros para o pódio
-  const top3 = ranking.slice(0, 3);
-  // O restante vai para a lista completa
-  const listaCompleta = ranking;
+  return Number.isFinite(numero) ? numero.toFixed(2) : "—";
+}
+
+function valoresUnicos(itens, campo) {
+  return [...new Set(itens.map((item) => item[campo]).filter(Boolean))].sort(
+    (a, b) => String(a).localeCompare(String(b), "pt-BR"),
+  );
+}
+
+function obterClassesPosicao(posicao) {
+  if (posicao === 1) {
+    return {
+      card: "border-[#f19f17] shadow-md",
+      numero: "bg-amber-50 text-[#f19f17]",
+      icone: "text-[#f19f17]",
+    };
+  }
+
+  if (posicao === 2) {
+    return {
+      card: "border-gray-300",
+      numero: "bg-gray-100 text-gray-600",
+      icone: "text-gray-400",
+    };
+  }
+
+  if (posicao === 3) {
+    return {
+      card: "border-orange-200",
+      numero: "bg-orange-50 text-orange-700",
+      icone: "text-orange-700",
+    };
+  }
+
+  return {
+    card: "border-gray-100",
+    numero: "bg-blue-50 text-blue-600",
+    icone: "text-gray-400",
+  };
+}
+
+function Campo({ label, children }) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-xs font-semibold text-gray-600">
+        {label}
+      </span>
+
+      {children}
+    </label>
+  );
+}
+
+function CardPodio({ projeto }) {
+  const classes = obterClassesPosicao(projeto.posicao);
+
+  const Icone = projeto.posicao === 1 ? Trophy : Medal;
 
   return (
-    <section className="mx-auto flex max-w-5xl flex-col gap-8">
-      <div className="mb-2">
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Ranking de Projetos</h1>
-        <p className="mt-2 text-sm text-gray-500">Projetos mais bem avaliados da plataforma</p>
+    <article
+      className={`flex min-h-80 flex-col items-center rounded-3xl border-2 bg-white p-7 text-center ${classes.card}`}
+    >
+      <Icone size={projeto.posicao === 1 ? 44 : 38} className={classes.icone} />
+
+      <div
+        className={`mt-4 flex h-14 w-14 items-center justify-center rounded-2xl text-xl font-black ${classes.numero}`}
+      >
+        {projeto.posicao}º
       </div>
 
-      {/* Pódio Top 3 */}
-      {top3.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-          {/* 2º Lugar */}
-          {top3[1] && (
-            <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm flex flex-col items-center text-center order-2 md:order-1 h-full justify-between">
-              <div className="flex flex-col items-center">
-                <span className="text-gray-400 mb-1">🥈</span>
-                <h2 className="text-2xl font-bold text-gray-700 mb-4">2º</h2>
-                <h3 className="text-sm font-bold text-gray-800 mb-1">{top3[1].titulo}</h3>
-                <p className="text-xs text-gray-500">{top3[1]._curso}</p>
-              </div>
-              <div className="mt-6 flex items-center gap-4 text-sm">
-                <span className="font-bold text-gray-800 flex items-center gap-1">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#f19f17]"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                  {top3[1]._nota.toFixed(1)}
-                </span>
-                <span className="text-gray-500">{top3[1]._avaliacoes} avaliações</span>
-              </div>
-            </div>
-          )}
+      <h2 className="mt-5 text-base font-bold leading-snug text-gray-900">
+        {projeto.titulo}
+      </h2>
 
-          {/* 1º Lugar */}
-          <div className="rounded-3xl border-2 border-[#f19f17] bg-white p-8 shadow-md flex flex-col items-center text-center order-1 md:order-2 transform md:-translate-y-4">
-            <div className="flex flex-col items-center">
-              <span className="text-[#f19f17] text-xl mb-1">🏆</span>
-              <h2 className="text-4xl font-bold text-[#f19f17] mb-4">1º</h2>
-              <h3 className="text-base font-bold text-gray-900 mb-1">{top3[0].titulo}</h3>
-              <p className="text-xs text-gray-500">{top3[0]._curso}</p>
-            </div>
-            <div className="mt-6 flex items-center gap-4 text-sm bg-white px-4 py-2 rounded-full border border-gray-100">
-              <span className="font-bold text-gray-800 flex items-center gap-1">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#f19f17]"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                {top3[0]._nota.toFixed(1)}
-              </span>
-              <span className="text-gray-500 font-medium">{top3[0]._avaliacoes} avaliações</span>
-            </div>
-          </div>
+      <p className="mt-2 text-sm text-gray-500">{projeto.curso}</p>
 
-          {/* 3º Lugar */}
-          {top3[2] && (
-            <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm flex flex-col items-center text-center order-3 h-full justify-between">
-              <div className="flex flex-col items-center">
-                <span className="text-amber-700 mb-1">🥉</span>
-                <h2 className="text-2xl font-bold text-gray-700 mb-4">3º</h2>
-                <h3 className="text-sm font-bold text-gray-800 mb-1">{top3[2].titulo}</h3>
-                <p className="text-xs text-gray-500">{top3[2]._curso}</p>
-              </div>
-              <div className="mt-6 flex items-center gap-4 text-sm">
-                <span className="font-bold text-gray-800 flex items-center gap-1">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#f19f17]"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                  {top3[2]._nota.toFixed(1)}
-                </span>
-                <span className="text-gray-500">{top3[2]._avaliacoes} avaliações</span>
-              </div>
-            </div>
-          )}
+      <p className="mt-1 text-xs text-gray-400">
+        {projeto.turma} • {projeto.semestre}
+      </p>
+
+      <p className="mt-3 text-xs text-gray-400">{projeto.area_conhecimento}</p>
+
+      <div className="mt-auto pt-6">
+        <p className="text-3xl font-bold text-[#f19f17]">
+          {formatarMedia(projeto.media_geral)}
+        </p>
+
+        <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+          Média geral
+        </p>
+
+        <p className="mt-3 text-xs text-gray-500">
+          {projeto.total_avaliacoes} avaliação(ões)
+        </p>
+      </div>
+    </article>
+  );
+}
+
+export default function Ranking() {
+  const {
+    ranking,
+    rankingCompleto,
+    totalProjetos,
+    loading,
+    atualizando,
+    erro,
+    aplicarFiltros,
+  } = useAlunoRanking();
+
+  const [filtros, setFiltros] = useState(FILTROS_INICIAIS);
+
+  const cursos = useMemo(
+    () => valoresUnicos(rankingCompleto, "curso"),
+    [rankingCompleto],
+  );
+
+  const turmas = useMemo(
+    () => valoresUnicos(rankingCompleto, "turma"),
+    [rankingCompleto],
+  );
+
+  const semestres = useMemo(
+    () => valoresUnicos(rankingCompleto, "semestre"),
+    [rankingCompleto],
+  );
+
+  const tresPrimeiros = ranking.slice(0, 3);
+
+  function alterarFiltro(campo, valor) {
+    setFiltros((anteriores) => ({
+      ...anteriores,
+      [campo]: valor,
+    }));
+  }
+
+  async function filtrar() {
+    try {
+      await aplicarFiltros(filtros);
+    } catch {
+      // O hook já exibe o erro.
+    }
+  }
+
+  async function limparFiltros() {
+    setFiltros(FILTROS_INICIAIS);
+
+    try {
+      await aplicarFiltros(FILTROS_INICIAIS);
+    } catch {
+      // O hook já exibe o erro.
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <LoaderCircle className="h-8 w-8 animate-spin text-[#f19f17]" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="pb-12">
+      <header className="mb-8">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+          Ranking de projetos
+        </h1>
+
+        <p className="mt-1 text-sm text-gray-500">
+          Classificação dos projetos aprovados com base nas médias das
+          avaliações registradas.
+        </p>
+      </header>
+
+      {erro && (
+        <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-medium text-red-600">
+          <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+
+          {erro}
         </div>
       )}
 
-      {/* Listagem com Sidebar */}
-      <div className="flex flex-col md:flex-row gap-8 items-start mt-4">
-        {/* Sidebar Filtros */}
-        <div className="w-full md:w-64 shrink-0 bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-6">
-            <span className="text-[#f19f17]">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-            </span>
-            <h2 className="font-bold text-gray-800">Filtros</h2>
+      <section className="mb-8 rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+        <header className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+          <div>
+            <h2 className="flex items-center gap-2 font-bold text-gray-900">
+              <Filter size={19} className="text-[#f19f17]" />
+              Filtros do ranking
+            </h2>
+
+            <p className="mt-1 text-xs text-gray-500">
+              As posições são recalculadas conforme os filtros aplicados.
+            </p>
           </div>
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">Período</label>
-              <select value={periodo} onChange={(e) => setPeriodo(e.target.value)} className="w-full border border-gray-200 rounded-xl p-2.5 text-sm outline-none focus:border-[#f19f17] bg-white">
-                <option value="">Todo o tempo</option>
-                <option value="mes">Último mês</option>
-                <option value="ano">Último ano</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">Curso</label>
-              <select value={curso} onChange={(e) => setCurso(e.target.value)} className="w-full border border-gray-200 rounded-xl p-2.5 text-sm outline-none focus:border-[#f19f17] bg-white">
-                <option value="">Todos os cursos</option>
-                <option value="Engenharia de Software">Engenharia de Software</option>
-                <option value="Ciência da Computação">Ciência da Computação</option>
-              </select>
-            </div>
+          <button
+            type="button"
+            onClick={limparFiltros}
+            disabled={atualizando}
+            className="text-sm font-semibold text-gray-500 hover:text-[#f19f17] disabled:opacity-50"
+          >
+            Limpar filtros
+          </button>
+        </header>
 
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">Área de conhecimento</label>
-              <select value={area} onChange={(e) => setArea(e.target.value)} className="w-full border border-gray-200 rounded-xl p-2.5 text-sm outline-none focus:border-[#f19f17] bg-white">
-                <option value="">Todas as áreas</option>
-                <option value="Tecnologia">Tecnologia</option>
-                <option value="Negócios">Negócios</option>
-              </select>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <Campo label="Curso">
+            <select
+              value={filtros.curso}
+              onChange={(event) => alterarFiltro("curso", event.target.value)}
+              className={selectClasses}
+            >
+              <option value="">Todos os cursos</option>
+
+              {cursos.map((curso) => (
+                <option key={curso} value={curso}>
+                  {curso}
+                </option>
+              ))}
+            </select>
+          </Campo>
+
+          <Campo label="Turma">
+            <select
+              value={filtros.turma}
+              onChange={(event) => alterarFiltro("turma", event.target.value)}
+              className={selectClasses}
+            >
+              <option value="">Todas as turmas</option>
+
+              {turmas.map((turma) => (
+                <option key={turma} value={turma}>
+                  {turma}
+                </option>
+              ))}
+            </select>
+          </Campo>
+
+          <Campo label="Semestre">
+            <select
+              value={filtros.semestre}
+              onChange={(event) =>
+                alterarFiltro("semestre", event.target.value)
+              }
+              className={selectClasses}
+            >
+              <option value="">Todos os semestres</option>
+
+              {semestres.map((semestre) => (
+                <option key={semestre} value={semestre}>
+                  {semestre}
+                </option>
+              ))}
+            </select>
+          </Campo>
         </div>
 
-        {/* Lista Completa */}
-        <div className="flex-1 w-full bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-gray-800 border-b border-gray-100 pb-4 mb-4">Classificação Completa</h2>
-          
-          <div className="space-y-0">
-            {listaCompleta.map((projeto, index) => (
-              <div key={projeto.id} className="flex items-center justify-between py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 px-2 rounded-xl transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className={`w-8 text-center font-bold ${index === 0 ? 'text-[#f19f17] text-xl' : index === 1 ? 'text-gray-400 text-lg' : index === 2 ? 'text-amber-700 text-lg' : 'text-gray-300'}`}>
-                    {index === 0 ? '🏆' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}º`}
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-800">{projeto.titulo}</h3>
-                    <p className="text-xs text-gray-500">{projeto._curso}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-6 text-right">
-                  <div>
-                    <div className="text-sm font-bold text-gray-800 flex items-center justify-end gap-1">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#f19f17]"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                      {projeto._nota.toFixed(1)}
-                    </div>
-                    <div className="text-[10px] text-gray-400 uppercase tracking-wide">Nota</div>
-                  </div>
-                  <div className="w-16">
-                    <div className="text-sm font-bold text-gray-700">{projeto._avaliacoes}</div>
-                    <div className="text-[10px] text-gray-400 uppercase tracking-wide">Avaliações</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {!listaCompleta.length && (
-              <div className="py-8 text-center text-sm text-gray-500">
-                Nenhum projeto disponível para ranking.
-              </div>
+        <div className="mt-5 flex justify-end">
+          <button
+            type="button"
+            onClick={filtrar}
+            disabled={atualizando}
+            className="flex items-center justify-center gap-2 rounded-xl bg-[#f19f17] px-5 py-2.5 text-sm font-bold text-white hover:bg-amber-600 disabled:opacity-50"
+          >
+            {atualizando ? (
+              <LoaderCircle size={17} className="animate-spin" />
+            ) : (
+              <RefreshCw size={17} />
             )}
-          </div>
+            Aplicar filtros
+          </button>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {atualizando ? (
+        <div className="flex min-h-80 items-center justify-center">
+          <LoaderCircle className="h-8 w-8 animate-spin text-[#f19f17]" />
+        </div>
+      ) : ranking.length > 0 ? (
+        <>
+          <section className="mb-10">
+            <header className="mb-5 flex items-center justify-between gap-4">
+              <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900">
+                <Trophy size={21} className="text-[#f19f17]" />
+                Projetos mais bem avaliados
+              </h2>
+
+              <span className="text-sm font-semibold text-gray-400">
+                {totalProjetos} projeto(s)
+              </span>
+            </header>
+
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              {tresPrimeiros.map((projeto) => (
+                <CardPodio key={projeto.projeto_id} projeto={projeto} />
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-gray-100 bg-white p-7 shadow-sm">
+            <header className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+              <div>
+                <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900">
+                  <BarChart3 size={20} className="text-[#f19f17]" />
+                  Classificação completa
+                </h2>
+
+                <p className="mt-1 text-xs text-gray-500">
+                  Projetos aprovados que possuem avaliações registradas.
+                </p>
+              </div>
+
+              <span className="text-sm font-semibold text-gray-400">
+                {ranking.length} resultado(s)
+              </span>
+            </header>
+
+            <div className="space-y-4">
+              {ranking.map((projeto) => {
+                const classes = obterClassesPosicao(projeto.posicao);
+
+                return (
+                  <article
+                    key={projeto.projeto_id}
+                    className="flex flex-col justify-between gap-5 rounded-2xl border border-gray-100 p-5 transition-colors hover:border-orange-200 md:flex-row md:items-center"
+                  >
+                    <div className="flex min-w-0 items-start gap-5">
+                      <div
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl font-bold ${classes.numero}`}
+                      >
+                        {projeto.posicao}º
+                      </div>
+
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-gray-900">
+                          {projeto.titulo}
+                        </h3>
+
+                        <p className="mt-1 text-xs text-gray-500">
+                          {projeto.curso} • {projeto.turma} • {projeto.semestre}
+                        </p>
+
+                        <p className="mt-2 text-xs text-gray-400">
+                          Área: {projeto.area_conhecimento}
+                        </p>
+
+                        <p className="mt-1 text-xs text-gray-400">
+                          Responsável: {projeto.aluno_responsavel}
+                        </p>
+
+                        <p className="mt-1 text-xs text-gray-400">
+                          Orientador: {projeto.professor_orientador}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 flex-wrap items-center gap-6">
+                      <div className="text-center">
+                        <strong className="block text-lg text-[#f19f17]">
+                          {formatarMedia(projeto.media_geral)}
+                        </strong>
+
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                          Média
+                        </span>
+                      </div>
+
+                      <div className="text-center">
+                        <strong className="block text-lg text-gray-900">
+                          {projeto.total_avaliacoes}
+                        </strong>
+
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                          Avaliações
+                        </span>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        </>
+      ) : (
+        <div className="rounded-3xl border border-dashed border-gray-200 bg-white p-14 text-center">
+          <Trophy size={42} className="mx-auto text-gray-300" />
+
+          <h2 className="mt-5 text-lg font-bold text-gray-700">
+            Nenhum projeto no ranking
+          </h2>
+
+          <p className="mx-auto mt-2 max-w-md text-sm text-gray-500">
+            Ainda não existem projetos aprovados com avaliações ou nenhum
+            resultado corresponde aos filtros selecionados.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }

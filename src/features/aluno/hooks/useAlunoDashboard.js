@@ -1,11 +1,22 @@
 import { useEffect, useState } from "react";
+
 import { getProjetos } from "../../../lib/projetosApi";
+
+import { getDestaques } from "../../../lib/rankingApi";
+
 import { getAlunoPerfil, updateAlunoPerfil } from "../api/alunoApi";
+
 export function useAlunoDashboard() {
   const [perfil, setPerfil] = useState(null);
+
   const [projetos, setProjetos] = useState([]);
+
+  const [destaques, setDestaques] = useState([]);
+
   const [erro, setErro] = useState("");
+
   const [loading, setLoading] = useState(true);
+
   const [salvandoPerfil, setSalvandoPerfil] = useState(false);
 
   useEffect(() => {
@@ -16,10 +27,10 @@ export function useAlunoDashboard() {
       setErro("");
 
       try {
-        const [perfilData, projetosData] = await Promise.all([
-          getAlunoPerfil(),
-          getProjetos(),
-        ]);
+        const perfilData = await getAlunoPerfil();
+
+        const [projetosResultado, destaquesResultado] =
+          await Promise.allSettled([getProjetos(), getDestaques({}, 3)]);
 
         if (!componenteAtivo) {
           return;
@@ -27,7 +38,26 @@ export function useAlunoDashboard() {
 
         setPerfil(perfilData);
 
-        setProjetos(Array.isArray(projetosData) ? projetosData : []);
+        setProjetos(
+          projetosResultado.status === "fulfilled" &&
+            Array.isArray(projetosResultado.value)
+            ? projetosResultado.value
+            : [],
+        );
+
+        setDestaques(
+          destaquesResultado.status === "fulfilled" &&
+            Array.isArray(destaquesResultado.value?.destaques)
+            ? destaquesResultado.value.destaques
+            : [],
+        );
+
+        if (
+          projetosResultado.status === "rejected" ||
+          destaquesResultado.status === "rejected"
+        ) {
+          setErro("Algumas informações do painel não puderam ser carregadas.");
+        }
       } catch (error) {
         if (!componenteAtivo) {
           return;
@@ -35,10 +65,9 @@ export function useAlunoDashboard() {
 
         setPerfil(null);
         setProjetos([]);
+        setDestaques([]);
 
-        setErro(
-          error.message || "Não foi possível carregar os dados do aluno.",
-        );
+        setErro(error.message || "Não foi possível carregar seu perfil.");
       } finally {
         if (componenteAtivo) {
           setLoading(false);
@@ -78,6 +107,7 @@ export function useAlunoDashboard() {
   return {
     perfil,
     projetos,
+    destaques,
     erro,
     loading,
     salvandoPerfil,
