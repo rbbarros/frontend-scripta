@@ -1,25 +1,56 @@
-import { useState, useEffect } from "react";
-import { getProjetos } from "../../../lib/projetosApi";; // TODO: Extrair para projetosApi no futuro
+import { useEffect, useState } from "react";
+
+import { getRanking } from "../../../lib/rankingApi";
 
 export function useEmpresaProjetos() {
   const [projetos, setProjetos] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
+  const [erro, setErro] = useState("");
+
   useEffect(() => {
-    async function fetchProjetos() {
+    let componenteAtivo = true;
+
+    async function carregarProjetos() {
+      setLoading(true);
+      setErro("");
+
       try {
-        const data = await getProjetos();
-        setProjetos(Array.isArray(data) ? data : []);
+        const data = await getRanking();
+
+        if (!componenteAtivo) {
+          return;
+        }
+
+        setProjetos(Array.isArray(data?.ranking) ? data.ranking : []);
       } catch (error) {
-        console.error("Erro ao buscar projetos:", error);
+        if (!componenteAtivo) {
+          return;
+        }
+
         setProjetos([]);
+
+        setErro(
+          error.message || "Não foi possível carregar os projetos públicos.",
+        );
       } finally {
-        setLoading(false);
+        if (componenteAtivo) {
+          setLoading(false);
+        }
       }
     }
-    
-    fetchProjetos();
+
+    carregarProjetos();
+
+    return () => {
+      componenteAtivo = false;
+    };
   }, []);
 
-  return { projetos, loading };
+  return {
+    projetos,
+    loading,
+    erro,
+  };
 }

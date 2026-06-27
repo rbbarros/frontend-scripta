@@ -1,166 +1,388 @@
-import React, { useState } from "react";
-import { Search, ArrowLeft, User, TrendingUp, Code, Users } from "lucide-react";
+import React, { useMemo, useState } from "react";
+
+import { ArrowLeft, BookOpen, GraduationCap, Search, User } from "lucide-react";
+
+import { getLinksDoProjeto, getProjetoPorId } from "../../../lib/projetosApi";
+
 import { useEmpresaProjetos } from "../hooks/useEmpresaProjetos";
 
 export default function Projetos() {
-  const { projetos, loading } = useEmpresaProjetos();
+  const { projetos, loading, erro } = useEmpresaProjetos();
+
   const [busca, setBusca] = useState("");
+
+  const [curso, setCurso] = useState("");
+
+  const [area, setArea] = useState("");
+
   const [projetoSelecionado, setProjetoSelecionado] = useState(null);
+
+  const [detalhes, setDetalhes] = useState(null);
+
+  const [links, setLinks] = useState([]);
+
+  const [carregandoDetalhes, setCarregandoDetalhes] = useState(false);
+
+  const [erroDetalhes, setErroDetalhes] = useState("");
+
+  const cursos = useMemo(
+    () =>
+      [
+        ...new Set(projetos.map((projeto) => projeto.curso).filter(Boolean)),
+      ].sort(),
+    [projetos],
+  );
+
+  const areas = useMemo(
+    () =>
+      [
+        ...new Set(
+          projetos.map((projeto) => projeto.area_conhecimento).filter(Boolean),
+        ),
+      ].sort(),
+    [projetos],
+  );
+
+  const projetosFiltrados = useMemo(() => {
+    const termo = busca.trim().toLowerCase();
+
+    return projetos.filter((projeto) => {
+      const correspondeBusca =
+        !termo ||
+        projeto.titulo?.toLowerCase().includes(termo) ||
+        projeto.curso?.toLowerCase().includes(termo) ||
+        projeto.area_conhecimento?.toLowerCase().includes(termo) ||
+        projeto.aluno_responsavel?.toLowerCase().includes(termo) ||
+        projeto.professor_orientador?.toLowerCase().includes(termo);
+
+      const correspondeCurso = !curso || projeto.curso === curso;
+
+      const correspondeArea = !area || projeto.area_conhecimento === area;
+
+      return correspondeBusca && correspondeCurso && correspondeArea;
+    });
+  }, [projetos, busca, curso, area]);
+
+  async function abrirProjeto(projeto) {
+    setProjetoSelecionado(projeto);
+    setDetalhes(null);
+    setLinks([]);
+    setErroDetalhes("");
+    setCarregandoDetalhes(true);
+
+    const [projetoResultado, linksResultado] = await Promise.allSettled([
+      getProjetoPorId(projeto.projeto_id),
+
+      getLinksDoProjeto(projeto.projeto_id),
+    ]);
+
+    if (projetoResultado.status === "fulfilled") {
+      setDetalhes(projetoResultado.value);
+    } else {
+      setErroDetalhes(
+        projetoResultado.reason?.message ||
+          "Não foi possível carregar os detalhes do projeto.",
+      );
+    }
+
+    if (
+      linksResultado.status === "fulfilled" &&
+      Array.isArray(linksResultado.value)
+    ) {
+      setLinks(linksResultado.value);
+    }
+
+    setCarregandoDetalhes(false);
+  }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-amber-500" />
       </div>
     );
   }
 
-  // Mock de Projetos se a API não retornar nada ou para preencher dados faltantes
-  const mockProjetos = [
-    { id: 1, titulo: "Sistema de IA para Diagnóstico Médico", curso: "Engenharia de Software - Inteligência Artificial - 1º/2025", tags: ["Python", "TensorFlow", "React", "FastAPI"], aval: "Excelente", color: "bg-emerald-50 text-emerald-700", resultados: "Alcançamos 94% de precisão no diagnóstico de doenças respiratórias em imagens de raio-X, reduzindo o tempo de triagem em 40%.", integrantes: ["João Silva", "Maria Santos", "Pedro Costa", "Ana Lima"] },
-    { id: 2, titulo: "Plataforma de Blockchain para Certificados", curso: "Ciência da Computação - Blockchain - 2º/2024", tags: ["Solidity", "Ethereum", "Node.js", "React"], aval: "Excelente", color: "bg-emerald-50 text-emerald-700", resultados: "Plataforma funcional que emitiu mais de 500 certificados de teste em rede testnet com tempo de validação inferior a 2 segundos.", integrantes: ["Carlos Eduardo", "Fernanda Souza"] },
-    { id: 3, titulo: "App de Realidade Aumentada Educacional", curso: "Design Digital - Mobile - 1º/2025", tags: ["Unity", "ARKit", "ARCore", "C#"], aval: "Ótimo", color: "bg-blue-50 text-blue-700", resultados: "Protótipo testado com 50 alunos do ensino médio, resultando em um aumento de 25% no engajamento nas aulas de química.", integrantes: ["Lucas Mendes", "Mariana Oliveira", "Tiago Silva"] },
-    { id: 4, titulo: "App de Mobilidade Urbana Inteligente", curso: "Sistemas de Informação - Desenvolvimento Web - 1º/2025", tags: ["React Native", "Node.js", "PostgreSQL", "Maps API"], aval: "Bom", color: "bg-amber-50 text-amber-700", resultados: "Mapeamento completo de 3 rotas universitárias integradas ao transporte público municipal via API.", integrantes: ["Beatriz Costa", "Rafael Gomes"] },
-  ];
-
-  const exibidos = projetos.length > 0 ? projetos.map((p, i) => ({
-    ...p,
-    id: p.id || i + 1,
-    curso: p.curso || mockProjetos[i % mockProjetos.length].curso,
-    tags: p.tags || mockProjetos[i % mockProjetos.length].tags,
-    aval: mockProjetos[i % mockProjetos.length].aval,
-    color: mockProjetos[i % mockProjetos.length].color,
-    resultados: p.descricao || mockProjetos[i % mockProjetos.length].resultados,
-    integrantes: mockProjetos[i % mockProjetos.length].integrantes
-  })) : mockProjetos;
-
-  const projetosFiltrados = exibidos.filter(p => 
-    p.titulo.toLowerCase().includes(busca.toLowerCase()) ||
-    (p.tags && p.tags.some(t => t.toLowerCase().includes(busca.toLowerCase())))
-  );
-
   if (projetoSelecionado) {
     return (
-      <div className="animate-in fade-in zoom-in-95 duration-200 pb-12">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Projetos</h1>
-          <p className="text-sm text-gray-500 mt-1">Explore projetos acadêmicos autorizados para visualização</p>
-        </div>
+      <div className="pb-12">
+        <header className="mb-8">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+            Projetos
+          </h1>
 
-        <button 
-          onClick={() => setProjetoSelecionado(null)}
-          className="flex items-center text-[#f19f17] font-semibold hover:text-amber-600 mb-6 transition-colors"
+          <p className="mt-1 text-sm text-gray-500">
+            Explore projetos acadêmicos públicos e aprovados.
+          </p>
+        </header>
+
+        <button
+          type="button"
+          onClick={() => {
+            setProjetoSelecionado(null);
+            setDetalhes(null);
+            setLinks([]);
+            setErroDetalhes("");
+          }}
+          className="mb-6 flex items-center font-semibold text-[#f19f17] hover:text-amber-600"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Voltar para lista
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar para a lista
         </button>
 
-        <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-          <div className="flex justify-between items-start mb-2">
-            <h2 className="text-xl font-bold text-gray-900">{projetoSelecionado.titulo}</h2>
-            <span className={`px-3 py-1 rounded-full text-xs font-bold ${projetoSelecionado.color}`}>{projetoSelecionado.aval}</span>
-          </div>
-          <p className="text-sm text-gray-500 mb-8 pb-8 border-b border-gray-100">{projetoSelecionado.curso}</p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+        <section className="rounded-3xl border border-gray-100 bg-white p-8 shadow-sm">
+          <div className="flex flex-col justify-between gap-5 border-b border-gray-100 pb-7 md:flex-row md:items-start">
             <div>
-              <h3 className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
-                <TrendingUp className="text-[#f19f17]" size={16} />
-                Resultados Alcançados
-              </h3>
-              <p className="text-sm text-gray-700 leading-relaxed">
-                {projetoSelecionado.resultados}
+              <span className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                {projetoSelecionado.posicao}º no ranking
+              </span>
+
+              <h2 className="mt-4 text-2xl font-bold text-gray-900">
+                {projetoSelecionado.titulo}
+              </h2>
+
+              <p className="mt-2 text-sm text-gray-500">
+                {projetoSelecionado.curso} • {projetoSelecionado.semestre}
               </p>
             </div>
 
-            <div>
-              <h3 className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
-                <Code className="text-[#f19f17]" size={16} />
-                Tecnologias
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {projetoSelecionado.tags.map((t, idx) => (
-                  <span key={idx} className="px-3 py-1 bg-amber-50 text-amber-600 rounded-lg text-xs font-bold">{t}</span>
-                ))}
-              </div>
+            <div className="rounded-2xl bg-amber-50 px-5 py-4 text-center">
+              <p className="text-2xl font-bold text-[#f19f17]">
+                {Number(projetoSelecionado.media_geral).toFixed(2)}
+              </p>
+
+              <p className="mt-1 text-xs font-semibold text-amber-700">
+                Média geral
+              </p>
             </div>
           </div>
 
-          <div className="mt-12 pt-8 border-t border-gray-100">
-            <h3 className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
-              <Users className="text-[#f19f17]" size={16} />
-              Integrantes
-            </h3>
-            <div className="flex flex-wrap gap-4">
-              {projetoSelecionado.integrantes.map((int, idx) => (
-                <div key={idx} className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-full pr-4 pl-1 py-1">
-                  <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
-                    <User size={12} />
-                  </div>
-                  <span className="text-xs font-bold text-gray-700">{int}</span>
+          {carregandoDetalhes ? (
+            <p className="py-10 text-center text-sm text-gray-500">
+              Carregando detalhes...
+            </p>
+          ) : (
+            <>
+              {erroDetalhes && (
+                <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-600">
+                  {erroDetalhes}
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
+              )}
+
+              <div className="mt-7 grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                    Área de conhecimento
+                  </h3>
+
+                  <p className="mt-2 text-sm font-semibold text-gray-700">
+                    {projetoSelecionado.area_conhecimento}
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                    Turma
+                  </h3>
+
+                  <p className="mt-2 text-sm font-semibold text-gray-700">
+                    {projetoSelecionado.turma}
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                    Aluno responsável
+                  </h3>
+
+                  <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
+                    <User size={16} />
+                    {projetoSelecionado.aluno_responsavel}
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                    Professor orientador
+                  </h3>
+
+                  <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
+                    <GraduationCap size={16} />
+                    {projetoSelecionado.professor_orientador}
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                    Avaliações
+                  </h3>
+
+                  <p className="mt-2 text-sm font-semibold text-gray-700">
+                    {projetoSelecionado.total_avaliacoes}
+                  </p>
+                </div>
+              </div>
+
+              {detalhes?.descricao && (
+                <div className="mt-8 border-t border-gray-100 pt-7">
+                  <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400">
+                    <BookOpen size={16} />
+                    Descrição
+                  </h3>
+
+                  <p className="mt-4 whitespace-pre-line text-sm leading-7 text-gray-600">
+                    {detalhes.descricao}
+                  </p>
+                </div>
+              )}
+
+              <div className="mt-8 border-t border-gray-100 pt-7">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                  Links do projeto
+                </h3>
+
+                {links.length > 0 ? (
+                  <div className="mt-4 space-y-3">
+                    {links.map((link) => (
+                      <a
+                        key={link.id}
+                        href={link.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm font-semibold text-[#f19f17] hover:border-[#f19f17]"
+                      >
+                        {link.descricao || link.url}
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-4 text-sm text-gray-500">
+                    Nenhum link foi cadastrado.
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+        </section>
       </div>
     );
   }
 
   return (
-    <div className="animate-in fade-in zoom-in-95 duration-200 pb-12">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Projetos</h1>
-        <p className="text-sm text-gray-500 mt-1">Explore projetos acadêmicos autorizados para visualização</p>
-      </div>
+    <div className="pb-12">
+      <header className="mb-8">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+          Projetos
+        </h1>
 
-      <div className="bg-white p-4 rounded-2xl border border-gray-100 flex flex-col md:flex-row gap-4 mb-8 shadow-sm">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-          <input 
-            type="text" 
-            placeholder="Tema, tecnologia ou palavra-chave..." 
-            value={busca} 
-            onChange={e => setBusca(e.target.value)} 
-            className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 focus:border-[#f19f17] rounded-xl text-sm outline-none transition-colors" 
+        <p className="mt-1 text-sm text-gray-500">
+          Explore projetos públicos aprovados e avaliados pela Faculdade Senac.
+        </p>
+      </header>
+
+      {erro && (
+        <div className="mb-6 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-medium text-red-600">
+          {erro}
+        </div>
+      )}
+
+      <div className="mb-8 grid grid-cols-1 gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm md:grid-cols-[1fr_240px_240px]">
+        <div className="relative">
+          <Search
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+            size={18}
+          />
+
+          <input
+            type="search"
+            placeholder="Título, aluno, professor ou palavra-chave"
+            value={busca}
+            onChange={(event) => setBusca(event.target.value)}
+            className="w-full rounded-xl border border-gray-200 py-3 pl-11 pr-4 text-sm outline-none focus:border-[#f19f17]"
           />
         </div>
-        <select className="px-4 py-3 bg-white border border-gray-200 focus:border-[#f19f17] rounded-xl text-sm font-medium text-gray-700 outline-none w-full md:w-64">
-          <option>Todas as áreas</option>
-          <option>Tecnologia</option>
-          <option>Design</option>
+
+        <select
+          value={area}
+          onChange={(event) => setArea(event.target.value)}
+          className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#f19f17]"
+        >
+          <option value="">Todas as áreas</option>
+
+          {areas.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
         </select>
-        <select className="px-4 py-3 bg-white border border-gray-200 focus:border-[#f19f17] rounded-xl text-sm font-medium text-gray-700 outline-none w-full md:w-64">
-          <option>Todos os cursos</option>
-          <option>Eng. Software</option>
-          <option>Ciência da Computação</option>
+
+        <select
+          value={curso}
+          onChange={(event) => setCurso(event.target.value)}
+          className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 outline-none focus:border-[#f19f17]"
+        >
+          <option value="">Todos os cursos</option>
+
+          {cursos.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
         </select>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {projetosFiltrados.map((p) => {
-          return (
-            <article 
-              key={p.id} 
-              className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm hover:border-[#f19f17] hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
-              onClick={() => setProjetoSelecionado(p)}
+      {projetosFiltrados.length > 0 ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {projetosFiltrados.map((projeto) => (
+            <article
+              key={projeto.projeto_id}
+              className="flex flex-col rounded-3xl border border-gray-100 bg-white p-6 shadow-sm transition-all hover:border-[#f19f17] hover:shadow-md"
             >
-              <div>
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="font-bold text-gray-900 leading-snug group-hover:text-[#f19f17] transition-colors">{p.titulo}</h3>
-                  <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${p.color}`}>{p.aval}</span>
-                </div>
-                <p className="text-xs text-gray-500 mb-6">{p.curso}</p>
+              <div className="flex items-start justify-between gap-4">
+                <span className="rounded-full border border-amber-100 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+                  {projeto.posicao}º
+                </span>
+
+                <span className="text-sm font-bold text-[#f19f17]">
+                  {Number(projeto.media_geral).toFixed(2)}
+                </span>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {p.tags.map((t, idx) => (
-                  <span key={idx} className="px-3 py-1 bg-gray-50 text-gray-500 rounded-lg text-[10px] font-semibold border border-gray-100">{t}</span>
-                ))}
+
+              <h2 className="mt-5 text-lg font-bold leading-snug text-gray-900">
+                {projeto.titulo}
+              </h2>
+
+              <p className="mt-2 text-sm text-gray-500">{projeto.curso}</p>
+
+              <div className="mt-5 space-y-2 text-sm text-gray-500">
+                <p>Área: {projeto.area_conhecimento}</p>
+
+                <p>Responsável: {projeto.aluno_responsavel}</p>
+
+                <p>{projeto.total_avaliacoes} avaliação(ões)</p>
               </div>
+
+              <button
+                type="button"
+                onClick={() => abrirProjeto(projeto)}
+                className="mt-6 rounded-xl bg-[#f19f17] px-5 py-3 text-sm font-bold text-white hover:bg-amber-600"
+              >
+                Visualizar projeto
+              </button>
             </article>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-3xl border border-dashed border-gray-200 bg-white p-12 text-center">
+          <h2 className="text-lg font-bold text-gray-700">
+            Nenhum projeto encontrado
+          </h2>
+
+          <p className="mt-2 text-sm text-gray-500">
+            Não existem projetos públicos compatíveis com os filtros.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
