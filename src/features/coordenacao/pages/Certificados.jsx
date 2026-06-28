@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Check, Copy, Search } from "lucide-react";
+import { Award, Check, Copy, LoaderCircle, Search } from "lucide-react";
 import { useCoordenacaoCertificados } from "../hooks/useCoordenacaoCertificados";
 
 function formatarData(data) {
@@ -18,7 +18,18 @@ function formatarData(data) {
 }
 
 export default function Certificados() {
-  const { certificados, loading, error } = useCoordenacaoCertificados();
+  const {
+    certificados,
+    projetosAprovados,
+    loading,
+    emitindo,
+    error,
+    erroAcao,
+    sucesso,
+    emitirParaProjeto,
+  } = useCoordenacaoCertificados();
+
+  const [projetoSelecionado, setProjetoSelecionado] = useState("");
 
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -83,7 +94,70 @@ export default function Certificados() {
           />
         </div>
       </div>
+      <section className="mb-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+        <div className="flex items-start gap-3">
+          <div className="rounded-xl bg-amber-50 p-3 text-[#f19f17]">
+            <Award size={22} />
+          </div>
 
+          <div>
+            <h2 className="font-bold text-gray-900">Emitir certificados</h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Emita certificados pendentes para todos os integrantes de um
+              projeto aprovado.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 flex flex-col gap-3 md:flex-row">
+          <select
+            value={projetoSelecionado}
+            onChange={(event) => setProjetoSelecionado(event.target.value)}
+            className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#f19f17]"
+          >
+            <option value="">Selecione um projeto aprovado</option>
+
+            {projetosAprovados.map((projeto) => (
+              <option key={projeto.id} value={projeto.id}>
+                {projeto.titulo} — {projeto.turma} — {projeto.semestre}
+              </option>
+            ))}
+          </select>
+
+          <button
+            type="button"
+            disabled={!projetoSelecionado || emitindo}
+            onClick={async () => {
+              const emitido = await emitirParaProjeto(projetoSelecionado);
+
+              if (emitido) {
+                setProjetoSelecionado("");
+              }
+            }}
+            className="flex items-center justify-center gap-2 rounded-xl bg-[#f19f17] px-5 py-3 text-sm font-bold text-white hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {emitindo ? (
+              <LoaderCircle size={17} className="animate-spin" />
+            ) : (
+              <Award size={17} />
+            )}
+            Emitir certificados
+          </button>
+        </div>
+
+        {erroAcao && (
+          <div className="mt-4 rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-medium text-red-600">
+            {erroAcao}
+          </div>
+        )}
+
+        {sucesso && (
+          <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50 p-3 text-sm font-medium text-emerald-700">
+            {sucesso}
+          </div>
+        )}
+      </section>
       <div className="mb-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <p className="text-3xl font-bold text-gray-900">
           {certificados.length}

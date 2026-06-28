@@ -1,39 +1,99 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { getTodosCertificados } from "../../../lib/certificadosApi";
+import {
+  emitirCertificados,
+  getTodosCertificados,
+} from "../../../lib/certificadosApi";
+
+import { getProjetos } from "../../../lib/projetosApi";
 
 export function useCoordenacaoCertificados() {
   const [certificados, setCertificados] = useState([]);
 
+  const [projetosAprovados, setProjetosAprovados] = useState([]);
+
   const [loading, setLoading] = useState(true);
+
+  const [emitindo, setEmitindo] = useState(false);
 
   const [error, setError] = useState("");
 
-  const fetchCertificados = useCallback(async () => {
+  const [erroAcao, setErroAcao] = useState("");
+
+  const [sucesso, setSucesso] = useState("");
+
+  const carregarDados = useCallback(async () => {
     setLoading(true);
     setError("");
 
     try {
-      const data = await getTodosCertificados();
+      const [certificadosData, projetosData] = await Promise.all([
+        getTodosCertificados(),
+        getProjetos(),
+      ]);
 
-      setCertificados(Array.isArray(data) ? data : []);
-    } catch (err) {
+      setCertificados(Array.isArray(certificadosData) ? certificadosData : []);
+
+      setProjetosAprovados(
+        Array.isArray(projetosData)
+          ? projetosData.filter((projeto) => projeto.status === "aprovado")
+          : [],
+      );
+    } catch (error) {
       setCertificados([]);
+      setProjetosAprovados([]);
 
-      setError(err.message || "Erro ao carregar certificados.");
+      setError(error.message || "Não foi possível carregar os certificados.");
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchCertificados();
-  }, [fetchCertificados]);
+    carregarDados();
+  }, [carregarDados]);
+
+  async function emitirParaProjeto(projetoId) {
+    if (!projetoId) {
+      setErroAcao("Selecione um projeto aprovado.");
+
+      return false;
+    }
+
+    setEmitindo(true);
+    setErroAcao("");
+    setSucesso("");
+
+    try {
+      const resposta = await emitirCertificados(projetoId);
+
+      const certificadosAtualizados = await getTodosCertificados();
+
+      setCertificados(
+        Array.isArray(certificadosAtualizados) ? certificadosAtualizados : [],
+      );
+
+      setSucesso(resposta?.message || "Emissão concluída.");
+
+      return true;
+    } catch (error) {
+      setErroAcao(error.message || "Não foi possível emitir os certificados.");
+
+      return false;
+    } finally {
+      setEmitindo(false);
+    }
+  }
 
   return {
     certificados,
+    projetosAprovados,
     loading,
+    emitindo,
     error,
-    refetch: fetchCertificados,
+    erroAcao,
+    sucesso,
+    emitirParaProjeto,
+    recarregar: carregarDados,
   };
 }
