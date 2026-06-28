@@ -261,21 +261,23 @@ export default function Ranking() {
           </button>
         </header>
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_220px_220px_220px]">
-          <div className="relative">
-            <Search
-              size={18}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-            />
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(280px,1.5fr)_repeat(3,minmax(170px,1fr))_auto] xl:items-end">
+          <Campo label="Busca">
+            <div className="relative">
+              <Search
+                size={18}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+              />
 
-            <input
-              type="search"
-              value={busca}
-              onChange={(event) => setBusca(event.target.value)}
-              placeholder="Buscar por projeto, aluno, professor ou área"
-              className={`${inputClasses} pl-11`}
-            />
-          </div>
+              <input
+                type="search"
+                value={busca}
+                onChange={(event) => setBusca(event.target.value)}
+                placeholder="Projeto, aluno, professor ou área"
+                className={`${inputClasses} pl-11`}
+              />
+            </div>
+          </Campo>
 
           <Campo label="Curso">
             <select
@@ -326,14 +328,12 @@ export default function Ranking() {
               ))}
             </select>
           </Campo>
-        </div>
 
-        <div className="mt-5 flex justify-end">
           <button
             type="button"
             onClick={filtrar}
             disabled={atualizando}
-            className="flex items-center justify-center gap-2 rounded-xl bg-[#f19f17] px-5 py-2.5 text-sm font-bold text-white hover:bg-amber-600 disabled:opacity-50"
+            className="flex h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-[#f19f17] px-5 text-sm font-bold text-white hover:bg-amber-600 disabled:opacity-50 xl:w-auto"
           >
             {atualizando ? (
               <LoaderCircle size={17} className="animate-spin" />
